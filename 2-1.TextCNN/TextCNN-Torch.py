@@ -11,15 +11,14 @@ import torch.nn.functional as F
 dtype = torch.FloatTensor
 
 # Text-CNN Parameter
-embedding_size = 2
+embedding_size = 2 # n-gram
 sequence_length = 3
 num_classes = 2  # 0 or 1
-training_epoch = 10000
-filter_sizes = [2, 2, 2]
+filter_sizes = [2, 2, 2] # n-gram window
 num_filters = 3
 
-sentences = ["i love you", "he loves me", "she likes baseball",
-             "i hate you", "sorry for that", "this is awful"]
+# 3 words sentences (=sequence_length is 3)
+sentences = ["i love you", "he loves me", "she likes baseball", "i hate you", "sorry for that", "this is awful"]
 labels = [1, 1, 1, 0, 0, 0]  # 1 is good, 0 is not good.
 
 word_list = " ".join(sentences).split()
@@ -33,7 +32,7 @@ for sen in sentences:
 
 targets = []
 for out in labels:
-    targets.append(out)
+    targets.append(out) # To using Torch Softmax Loss function
 
 input_batch = Variable(torch.LongTensor(inputs))
 target_batch = Variable(torch.LongTensor(targets))
@@ -49,22 +48,24 @@ class TextCNN(nn.Module):
         self.Bias = nn.Parameter(0.1 * torch.ones([num_classes])).type(dtype)
 
     def forward(self, X):
-        embedded_chars = self.W[X]
-        # [batch, sequence_length, embedding_size] to [batch, channel, sequence_length, embedding_size]
-        embedded_chars = embedded_chars.unsqueeze(1)
+        embedded_chars = self.W[X] # [batch_size, sequence_length, sequence_length]
+        embedded_chars = embedded_chars.unsqueeze(1) # add channel(=1) [batch, channel(=1), sequence_length, embedding_size]
 
         pooled_outputs = []
         for filter_size in filter_sizes:
+            # conv : [input_channel(=1), output_channel(=3), (filter_hleight, filter_width), bias_option]
             conv = nn.Conv2d(1, num_filters, (filter_size, embedding_size), bias=True)(embedded_chars)
             h = F.relu(conv)
+            # mp : ((filter_hleight, filter_width))
             mp = nn.MaxPool2d((sequence_length - filter_size + 1, 1))
-            pooled = mp(h)
+            # pooled : [batch_size(=6), output_height(=1), output_width(=1), output_channel(=3)]
+            pooled = mp(h).permute(0, 3, 2, 1)
             pooled_outputs.append(pooled)
 
-        h_pool = torch.cat(pooled_outputs, num_filters)
-        h_pool_flat = torch.reshape(h_pool, [-1, self.num_filters_total])
+        h_pool = torch.cat(pooled_outputs, num_filters) # [batch_size(=6), output_height(=1), output_width(=1), output_channel(=3) * 3]
+        h_pool_flat = torch.reshape(h_pool, [-1, self.num_filters_total]) # [batch_size(=6), output_height * output_width * (output_channel * 3)]
 
-        model = torch.mm(h_pool_flat, self.Weight) + self.Bias
+        model = torch.mm(h_pool_flat, self.Weight) + self.Bias # [batch_size, num_classes]
         return model
 
 model = TextCNN()
@@ -73,10 +74,11 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 # Training
-for epoch in range(1, training_epoch + 1):
+for epoch in range(5000):
     optimizer.zero_grad()
     output = model(input_batch)
 
+    # output : [batch_size, num_classes], target_batch : [batch_size] (LongTensor, not one-hot)
     loss = criterion(output, target_batch)
     if (epoch + 1) % 1000 == 0:
         print('Epoch:', '%04d' % (epoch + 1), 'cost =', '{:.6f}'.format(loss))

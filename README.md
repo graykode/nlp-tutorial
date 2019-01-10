@@ -4,16 +4,16 @@
 
 `nlp-tutorial` is a tutorial for who is studying NLP(Natural Language Processing) using **TensorFlow** and **Pytorch**. 
 
-- Most of the models were implemented with less than 100 lines of code.
+- Most of the models were implemented with less than **100 lines** of code.(except comments or blank lines)
 - You can also learn Tensorflow or Pytorch. 
 
 ## Curriculum
 
 #### 1. Basic Embedding Model - (Example Purpose)
 
-- 1-1. [NNLM(Neural Network Language Model)](https://github.com/graykode/nlp-tutorial/tree/master/1-1.%20NNLM) - **Predict Next Word**
+- 1-1. [NNLM(Neural Network Language Model)](https://github.com/graykode/nlp-tutorial/tree/master/1-1.NNLM) - **Predict Next Word**
   - Paper -  [A Neural Probabilistic Language Model(2003)](http://www.jmlr.org/papers/volume3/bengio03a/bengio03a.pdf)
-- 1-2. [Word2Vec(Skip-gram)](https://github.com/graykode/nlp-tutorial/tree/master/1-2.%20Word2Vec) - **Embedding Words and Show Graph**
+- 1-2. [Word2Vec(Skip-gram)](https://github.com/graykode/nlp-tutorial/tree/master/1-2.Word2Vec) - **Embedding Words and Show Graph**
   - Paper - [Distributed Representations of Words and Phrases
     and their Compositionality(2013)](https://papers.nips.cc/paper/5021-distributed-representations-of-words-and-phrases-and-their-compositionality.pdf)
 - 1-3. Glove - **Embedding Words and Show Graph**
@@ -26,7 +26,7 @@
 
 #### 2. CNN(Convolutional Neural Network)
 
-- 2-1. [TextCNN](https://github.com/graykode/nlp-tutorial/tree/master/2-1.%20TextCNN) - **POS/NEG Classification**
+- 2-1. [TextCNN](https://github.com/graykode/nlp-tutorial/tree/master/2-1.TextCNN) - **POS/NEG Classification**
   - Paper - [Convolutional Neural Networks for Sentence Classification(2014)](http://www.aclweb.org/anthology/D14-1181)
 - 2-2. DCNN(Dynamic Convolutional Neural Network)
 - 2-3. DMCNN(Dynamic Multi-Pooling CNN)
@@ -35,7 +35,7 @@
 
 #### 3. RNN(Recurrent Neural Network)
 
-- 3-1. [TextRNN](https://github.com/graykode/nlp-tutorial/tree/master/3-1.%20TextRNN) - **Predict Next Step**
+- 3-1. [TextRNN](https://github.com/graykode/nlp-tutorial/tree/master/3-1.TextRNN) - **Predict Next Step**
   - Paper - [Finding Structure in Time(1990)](http://psych.colorado.edu/~kimlab/Elman1990.pdf)
 - 3-2. TextLSTM - **Autocomplete**
 - 3-3. Bi-LSTM
@@ -44,7 +44,7 @@
 
 #### 4. Attention Mechanism
 
-- 4-1. [Sequence2Sequence](https://github.com/graykode/nlp-tutorial/tree/master/4-1.%20Seq2Seq) - **Translate**
+- 4-1. [Sequence2Sequence](https://github.com/graykode/nlp-tutorial/tree/master/4-1.Seq2Seq) - **Translate**
   - Paper - [Learning Phrase Representations using RNN Encoder–Decoder
     for Statistical Machine Translation(2014)](https://arxiv.org/pdf/1406.1078.pdf)
 - 4-2. Attention Mechanism
@@ -61,7 +61,7 @@
 
 
 
-#### 6. New Trend(Pre-Trained Model)
+#### 6. Pre-Trained Model
 
 - 6-1. BERT
 

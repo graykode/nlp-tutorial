@@ -6,11 +6,11 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
-import matplotlib
 import matplotlib.pyplot as plt
 
 dtype = torch.FloatTensor
 
+# 3 Words Sentence
 sentences = [ "i like dog", "i like cat", "i like animal",
               "dog cat animal", "apple cat dog like", "dog fish milk like",
               "dog cat eyes like", "i like apple", "apple i hate",
@@ -21,11 +21,9 @@ word_list = " ".join(sentences).split()
 word_list = list(set(word_list))
 word_dict = {w: i for i, w in enumerate(word_list)}
 
-# Parameter
-batch_size = 20
-embedding_size = 2
-training_epoch = 10000
-
+# Word2Vec Parameter
+batch_size = 20  # To show 2 dim embedding graph
+embedding_size = 2  # To show 2 dim embedding graph
 voc_size = len(word_list)
 
 def random_batch(data, size):
@@ -58,8 +56,9 @@ class Word2Vec(nn.Module):
         self.WT = nn.Parameter(-2 * torch.rand(embedding_size, voc_size) + 1).type(dtype) # embedding_size > voc_size Weight
 
     def forward(self, X):
-        hidden_layer = torch.matmul(X, self.W)
-        output_layer = torch.matmul(hidden_layer, self.WT)
+        # X : [batch_size, voc_size]
+        hidden_layer = torch.matmul(X, self.W) # hidden_layer : [batch_size, embedding_size]
+        output_layer = torch.matmul(hidden_layer, self.WT) # output_layer : [batch_size, voc_size]
         return output_layer
 
 model = Word2Vec()
@@ -68,7 +67,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 # Training
-for epoch in range(1, training_epoch + 1):
+for epoch in range(5000):
 
     input_batch, target_batch = random_batch(skip_grams, batch_size)
 
@@ -78,6 +77,7 @@ for epoch in range(1, training_epoch + 1):
     optimizer.zero_grad()
     output = model(input_batch)
 
+    # output : [batch_size, voc_size], target_batch : [batch_size] (LongTensor, not one-hot)
     loss = criterion(output, target_batch)
     if (epoch + 1)%1000 == 0:
         print('Epoch:', '%04d' % (epoch + 1), 'cost =', '{:.6f}'.format(loss))
@@ -87,9 +87,7 @@ for epoch in range(1, training_epoch + 1):
 
 for i, label in enumerate(word_list):
     W, WT = model.parameters()
-    x = float(W[i][0])
-    y = float(W[i][1])
+    x,y = float(W[i][0]), float(W[i][1])
     plt.scatter(x, y)
     plt.annotate(label, xy=(x, y), xytext=(5, 2), textcoords='offset points', ha='right', va='bottom')
-
 plt.show(word_list)
