@@ -53,16 +53,16 @@ class TextCNN(nn.Module):
 
         pooled_outputs = []
         for filter_size in filter_sizes:
-            # conv : [input_channel(=1), output_channel(=3), (filter_hleight, filter_width), bias_option]
+            # conv : [input_channel(=1), output_channel(=3), (filter_height, filter_width), bias_option]
             conv = nn.Conv2d(1, num_filters, (filter_size, embedding_size), bias=True)(embedded_chars)
             h = F.relu(conv)
-            # mp : ((filter_hleight, filter_width))
+            # mp : ((filter_height, filter_width))
             mp = nn.MaxPool2d((sequence_length - filter_size + 1, 1))
             # pooled : [batch_size(=6), output_height(=1), output_width(=1), output_channel(=3)]
             pooled = mp(h).permute(0, 3, 2, 1)
             pooled_outputs.append(pooled)
 
-        h_pool = torch.cat(pooled_outputs, num_filters) # [batch_size(=6), output_height(=1), output_width(=1), output_channel(=3) * 3]
+        h_pool = torch.cat(pooled_outputs, len(filter_sizes)) # [batch_size(=6), output_height(=1), output_width(=1), output_channel(=3) * 3]
         h_pool_flat = torch.reshape(h_pool, [-1, self.num_filters_total]) # [batch_size(=6), output_height * output_width * (output_channel * 3)]
 
         model = torch.mm(h_pool_flat, self.Weight) + self.Bias # [batch_size, num_classes]

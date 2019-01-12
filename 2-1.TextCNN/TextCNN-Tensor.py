@@ -58,7 +58,7 @@ for i, filter_size in enumerate(filter_sizes):
     pooled_outputs.append(pooled) # dim of pooled : [batch_size(=6), output_height(=1), output_width(=1), channel(=3)]
 
 num_filters_total = num_filters * len(filter_sizes)
-h_pool = tf.concat(pooled_outputs, num_filters) # h_pool : [batch_size(=6), output_height(=1), output_width(=1), output_channel(=3) * 3]
+h_pool = tf.concat(pooled_outputs, len(filter_sizes)) # h_pool : [batch_size(=6), output_height(=1), output_width(=1), output_channel(=3) * 3]
 h_pool_flat = tf.reshape(h_pool, [-1, num_filters_total]) # [batch_size, output_height * output_width * (channel * 3)]
 
 # Model-Training
