@@ -38,18 +38,18 @@
 - 3-1. [TextRNN](https://github.com/graykode/nlp-tutorial/tree/master/3-1.TextRNN) - **Predict Next Step**
   - Paper - [Finding Structure in Time(1990)](http://psych.colorado.edu/~kimlab/Elman1990.pdf)
 - 3-2. TextLSTM - **Autocomplete**
-- 3-3. Bi-LSTM
+- 3-3. Bi-LSTM - **Sentences Classification**
 
 
 
 #### 4. Attention Mechanism
 
-- 4-1. [Sequence2Sequence](https://github.com/graykode/nlp-tutorial/tree/master/4-1.Seq2Seq) - **Translate**
+- 4-1. [Sequence2Sequence](https://github.com/graykode/nlp-tutorial/tree/master/4-1.Seq2Seq) - **Change Word**
   - Paper - [Learning Phrase Representations using RNN Encoder–Decoder
     for Statistical Machine Translation(2014)](https://arxiv.org/pdf/1406.1078.pdf)
-- 4-2. Attention Mechanism
-- 4-3. The Transformer
-- 4-4. Bi-LSTM with Attention
+- 4-2. Attention Mechanism - **Translate**
+- 4-3. Bi-LSTM with Attention
+- 4-4. The Transformer
 
 
 
