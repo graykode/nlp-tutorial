@@ -25,7 +25,7 @@
 
 #### 2. CNN(Convolutional Neural Network)
 
-- 2-1. [TextCNN](https://github.com/graykode/nlp-tutorial/tree/master/2-1.TextCNN) - **POS/NEG Classification**
+- 2-1. [TextCNN](https://github.com/graykode/nlp-tutorial/tree/master/2-1.TextCNN) - **Binary Sentiment Classification**
   - Paper - [Convolutional Neural Networks for Sentence Classification(2014)](http://www.aclweb.org/anthology/D14-1181)
 - 2-2. DCNN(Dynamic Convolutional Neural Network)
 
@@ -38,6 +38,7 @@
 - 3-2. TextLSTM - **Autocomplete**
   - Paper - [LONG SHORT-TERM MEMORY(1997)](https://www.bioinf.jku.at/publications/older/2604.pdf)
 - 3-3. Bi-LSTM - **Sentences Classification**
+  - Paper - [Bidirectional LSTM-CRF Models for Sequence Tagging(2015)](https://arxiv.org/abs/1508.01991)
 
 
 
@@ -46,13 +47,15 @@
 - 4-1. [Sequence2Sequence](https://github.com/graykode/nlp-tutorial/tree/master/4-1.Seq2Seq) - **Change Word**
   - Paper - [Learning Phrase Representations using RNN Encoder–Decoder
     for Statistical Machine Translation(2014)](https://arxiv.org/pdf/1406.1078.pdf)
-- 4-2. [Attention Mechanism](https://github.com/graykode/nlp-tutorial/tree/master/4-2.Attention) - **Translate**
+- 4-2. [Seq2Seq with Attention](https://github.com/graykode/nlp-tutorial/tree/master/4-2.Attention) - **Translate**
   - Paper - [Neural Machine Translation by Jointly Learning to Align and Translate(2014)](https://arxiv.org/abs/1409.0473)
-- 4-3. Bi-LSTM with Attention - **POS/NEG Classification**
-- 4-4. The Transformer - **Translate**
+- 4-3. [Bi-LSTM with Attention](https://github.com/graykode/nlp-tutorial/tree/master/4-3.Bi-LSTM(Attention)) - **Binary Sentiment Classification**
+- 4-4. [The Transformer](https://github.com/graykode/nlp-tutorial/tree/master/4-4.Transformer) - **Translate**
   - Paper - [Attention Is All You Need(2017)](https://arxiv.org/abs/1706.03762)
 
-#### 6. New Trend Model
+
+
+#### 5. Model based on Transformer
 
 - 6-1. BERT
 

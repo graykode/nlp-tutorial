@@ -60,7 +60,7 @@ class BiLSTM_Attention(nn.Module):
 
         # final_hidden_state, final_cell_state : [num_layers(=1) * num_directions(=2), batch_size, n_hidden]
         output, (final_hidden_state, final_cell_state) = self.lstm(input, (hidden_state, cell_state))
-        output = output.permute(1, 0, 2) # output : [batch_size, num_layers(=1) * num_directions(=2), n_hidden]
+        output = output.permute(1, 0, 2) # output : [batch_size, len_seq, n_hidden]
         attn_output = self.attention_net(output, final_hidden_state)
         return self.out(attn_output) # [batch_size, num_classes]
 
