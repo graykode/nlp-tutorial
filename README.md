@@ -16,8 +16,7 @@
 - 1-2. [Word2Vec(Skip-gram)](https://github.com/graykode/nlp-tutorial/tree/master/1-2.Word2Vec) - **Embedding Words and Show Graph**
   - Paper - [Distributed Representations of Words and Phrases
     and their Compositionality(2013)](https://papers.nips.cc/paper/5021-distributed-representations-of-words-and-phrases-and-their-compositionality.pdf)
-- 1-3. Glove - **Embedding Words and Show Graph**
-- 1-4. FastText(Application Level) - **Sentence Classification**
+- 1-3. FastText(Application Level) - **Sentence Classification**
   - Site : http://fasttext.cc
   - Paper : [Bag of Tricks for Efficient Text Classification(2016)](https://arxiv.org/pdf/1607.01759.pdf)
   - Usage : Google Colab
@@ -29,7 +28,6 @@
 - 2-1. [TextCNN](https://github.com/graykode/nlp-tutorial/tree/master/2-1.TextCNN) - **POS/NEG Classification**
   - Paper - [Convolutional Neural Networks for Sentence Classification(2014)](http://www.aclweb.org/anthology/D14-1181)
 - 2-2. DCNN(Dynamic Convolutional Neural Network)
-- 2-3. DMCNN(Dynamic Multi-Pooling CNN)
 
 
 
@@ -38,7 +36,7 @@
 - 3-1. [TextRNN](https://github.com/graykode/nlp-tutorial/tree/master/3-1.TextRNN) - **Predict Next Step**
   - Paper - [Finding Structure in Time(1990)](http://psych.colorado.edu/~kimlab/Elman1990.pdf)
 - 3-2. TextLSTM - **Autocomplete**
-  - Paper - [LONG SHORT-TERM MEMORY](https://www.bioinf.jku.at/publications/older/2604.pdf)
+  - Paper - [LONG SHORT-TERM MEMORY(1997)](https://www.bioinf.jku.at/publications/older/2604.pdf)
 - 3-3. Bi-LSTM - **Sentences Classification**
 
 
@@ -49,30 +47,14 @@
   - Paper - [Learning Phrase Representations using RNN Encoder–Decoder
     for Statistical Machine Translation(2014)](https://arxiv.org/pdf/1406.1078.pdf)
 - 4-2. [Attention Mechanism](https://github.com/graykode/nlp-tutorial/tree/master/4-2.Attention) - **Translate**
-  - Paper - [Neural Machine Translation by Jointly Learning to Align and Translate](https://arxiv.org/abs/1409.0473)
+  - Paper - [Neural Machine Translation by Jointly Learning to Align and Translate(2014)](https://arxiv.org/abs/1409.0473)
 - 4-3. Bi-LSTM with Attention - **POS/NEG Classification**
-- 4-4. The Transformer
-
-
-
-#### 5. Recursive Neural Network
-
-- 5-1. Recursive Neural Network
-- 5-2. MV-RNN(Matrix-Vector Recursive Neural Network)
-- 5-3. RNTN(Recursive Neural Tensor Network)
-
-
+- 4-4. The Transformer - **Translate**
+  - Paper - [Attention Is All You Need(2017)](https://arxiv.org/abs/1706.03762)
 
 #### 6. New Trend Model
 
 - 6-1. BERT
-
-
-
-#### 7. ETC
-
-- 7-1. TextRank
-- 7-2. LDA(Latent Dirichlet Analysis)
 
 
 
