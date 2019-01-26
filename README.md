@@ -4,7 +4,7 @@
 
 `nlp-tutorial` is a tutorial for who is studying NLP(Natural Language Processing) using **TensorFlow** and **Pytorch**. 
 
-- Most of the models were implemented with less than **100 lines** of code.(except comments or blank lines)
+- Most of the models in NLP were implemented with less than **100 lines** of code.(except comments or blank lines)
 - You can also learn Tensorflow or Pytorch. 
 
 ## Curriculum
@@ -38,6 +38,7 @@
 - 3-1. [TextRNN](https://github.com/graykode/nlp-tutorial/tree/master/3-1.TextRNN) - **Predict Next Step**
   - Paper - [Finding Structure in Time(1990)](http://psych.colorado.edu/~kimlab/Elman1990.pdf)
 - 3-2. TextLSTM - **Autocomplete**
+  - Paper - [LONG SHORT-TERM MEMORY](https://www.bioinf.jku.at/publications/older/2604.pdf)
 - 3-3. Bi-LSTM - **Sentences Classification**
 
 
@@ -47,8 +48,9 @@
 - 4-1. [Sequence2Sequence](https://github.com/graykode/nlp-tutorial/tree/master/4-1.Seq2Seq) - **Change Word**
   - Paper - [Learning Phrase Representations using RNN Encoder–Decoder
     for Statistical Machine Translation(2014)](https://arxiv.org/pdf/1406.1078.pdf)
-- 4-2. Attention Mechanism - **Translate**
-- 4-3. Bi-LSTM with Attention
+- 4-2. [Attention Mechanism](https://github.com/graykode/nlp-tutorial/tree/master/4-2.Attention) - **Translate**
+  - Paper - [Neural Machine Translation by Jointly Learning to Align and Translate](https://arxiv.org/abs/1409.0473)
+- 4-3. Bi-LSTM with Attention - **POS/NEG Classification**
 - 4-4. The Transformer
 
 
@@ -61,7 +63,7 @@
 
 
 
-#### 6. Pre-Trained Model
+#### 6. New Trend Model
 
 - 6-1. BERT
 

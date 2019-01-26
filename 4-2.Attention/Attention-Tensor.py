@@ -14,7 +14,7 @@ word_dict = {w: i for i, w in enumerate(word_list)}
 n_class = len(word_dict)  # vocab list
 
 # Parameter
-max_len = 5  # maxium number of words in one sentence(=n_step)
+max_len = 5  # maxium number of words in one sentence(=number of time steps)
 n_hidden = 128
 
 def make_batch(sentences):
