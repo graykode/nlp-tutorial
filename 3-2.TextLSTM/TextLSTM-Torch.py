@@ -44,8 +44,7 @@ class TextLSTM(nn.Module):
         hidden_state = Variable(torch.zeros(1, len(X), n_hidden))   # [num_layers(=1) * num_directions(=1), batch_size, n_hidden]
         cell_state = Variable(torch.zeros(1, len(X), n_hidden))     # [num_layers(=1) * num_directions(=1), batch_size, n_hidden]
 
-        # final_hidden_state, final_cell_state : [num_layers(=1) * num_directions(=2), batch_size, n_hidden]
-        outputs, (final_hidden_state, final_cell_state) = self.lstm(input, (hidden_state, cell_state))
+        outputs, (_, _) = self.lstm(input, (hidden_state, cell_state))
         outputs = outputs[-1]  # [batch_size, n_hidden]
         model = torch.mm(outputs, self.W) + self.b  # model : [batch_size, n_class]
         return model

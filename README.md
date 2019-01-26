@@ -35,10 +35,9 @@
 
 - 3-1. [TextRNN](https://github.com/graykode/nlp-tutorial/tree/master/3-1.TextRNN) - **Predict Next Step**
   - Paper - [Finding Structure in Time(1990)](http://psych.colorado.edu/~kimlab/Elman1990.pdf)
-- 3-2. TextLSTM - **Autocomplete**
+- 3-2. [TextLSTM](https://github.com/graykode/nlp-tutorial/tree/master/3-2.TextLSTM) - **Autocomplete**
   - Paper - [LONG SHORT-TERM MEMORY(1997)](https://www.bioinf.jku.at/publications/older/2604.pdf)
-- 3-3. Bi-LSTM - **Sentences Classification**
-  - Paper - [Bidirectional LSTM-CRF Models for Sequence Tagging(2015)](https://arxiv.org/abs/1508.01991)
+- 3-3. Bi-LSTM - **Predict Long Next Step Word**
 
 
 
@@ -47,7 +46,7 @@
 - 4-1. [Sequence2Sequence](https://github.com/graykode/nlp-tutorial/tree/master/4-1.Seq2Seq) - **Change Word**
   - Paper - [Learning Phrase Representations using RNN Encoder–Decoder
     for Statistical Machine Translation(2014)](https://arxiv.org/pdf/1406.1078.pdf)
-- 4-2. [Seq2Seq with Attention](https://github.com/graykode/nlp-tutorial/tree/master/4-2.Attention) - **Translate**
+- 4-2. [Seq2Seq with Attention](https://github.com/graykode/nlp-tutorial/tree/master/4-2.Seq2Seq(Attention)) - **Translate**
   - Paper - [Neural Machine Translation by Jointly Learning to Align and Translate(2014)](https://arxiv.org/abs/1409.0473)
 - 4-3. [Bi-LSTM with Attention](https://github.com/graykode/nlp-tutorial/tree/master/4-3.Bi-LSTM(Attention)) - **Binary Sentiment Classification**
 - 4-4. [The Transformer](https://github.com/graykode/nlp-tutorial/tree/master/4-4.Transformer) - **Translate**
