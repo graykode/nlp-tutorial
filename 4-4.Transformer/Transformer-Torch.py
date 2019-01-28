@@ -9,6 +9,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
 import torch.nn.functional as F
+import matplotlib.pyplot as plt
 
 dtype = torch.FloatTensor
 # S: Symbol that shows starting of decoding input
@@ -20,6 +21,7 @@ sentences = ['ich mochte ein bier P', 'S i want a beer', 'i want a beer E']
 src_vocab = {w: i for i, w in enumerate(sentences[0].split())}
 src_vocab_size = len(src_vocab)
 tgt_vocab = {w: i for i, w in enumerate(set((sentences[1]+' '+sentences[2]).split()))}
+number_dict = {i: w for i, w in enumerate(set((sentences[1]+' '+sentences[2]).split()))}
 tgt_vocab_size = len(tgt_vocab)
 
 n_step = 5  # number of Step
@@ -176,17 +178,31 @@ for epoch in range(100):
     enc_inputs, dec_inputs, target_batch = make_batch(sentences)
     outputs, enc_self_attns, dec_self_attns, dec_enc_attns = model(enc_inputs, dec_inputs)
     loss = criterion(outputs, target_batch.contiguous().view(-1))
-    if (epoch + 1) % 10 == 0:
+    if (epoch + 1) % 20 == 0:
         print('Epoch:', '%04d' % (epoch + 1), 'cost =', '{:.6f}'.format(loss))
     loss.backward()
     optimizer.step()
 
+def showgraph(attn):
+    attn = attn[-1].squeeze(0)[0]
+    attn = attn.squeeze(0).data.numpy()
+    fig = plt.figure(figsize=(n_heads, n_heads)) # [n_heads, n_heads]
+    ax = fig.add_subplot(1, 1, 1)
+    ax.matshow(attn, cmap='viridis')
+    ax.set_xticklabels(['']+sentences[0].split(), fontdict={'fontsize': 14}, rotation=90)
+    ax.set_yticklabels(['']+sentences[2].split(), fontdict={'fontsize': 14})
+    plt.show()
+
 # Test
 predict, _, _, _ = model(enc_inputs, dec_inputs)
 predict = predict.data.max(1, keepdim=True)[1]
-output = ''
-for pre in predict:
-    for key, value in tgt_vocab.items():
-        if value == pre:
-            output += ' ' + key
-print(sentences[0], '->', output)
+print(sentences[0], '->', [number_dict[n.item()] for n in predict.squeeze()])
+
+print('first head of last enc_self_attns')
+showgraph(enc_self_attns)
+
+print('first head of last dec_self_attns')
+showgraph(dec_self_attns)
+
+print('first head of last dec_enc_attns')
+showgraph(dec_enc_attns)

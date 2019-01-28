@@ -12,6 +12,7 @@ sentences = [ "i like dog", "i love coffee", "i hate milk"]
 word_list = " ".join(sentences).split()
 word_list = list(set(word_list))
 word_dict = {w: i for i, w in enumerate(word_list)}
+number_dict = {i: w for i, w in enumerate(word_list)}
 n_class = len(word_dict) # number of Vocabulary
 
 # NNLM Parameter
@@ -75,12 +76,4 @@ for epoch in range(5000):
 predict = model(input_batch).data.max(1, keepdim=True)[1]
 
 # Test
-input = [sen.split()[:2] for sen in sentences]
-print(input)
-
-output = []
-for pre in predict:
-    for key, value in word_dict.items():
-        if value == pre:
-            output.append(key)
-print(output)
+print([sen.split()[:2] for sen in sentences], '->', [number_dict[n.item()] for n in predict.squeeze()])

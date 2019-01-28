@@ -14,6 +14,7 @@ sentences = [ "i like dog", "i love coffee", "i hate milk"]
 word_list = " ".join(sentences).split()
 word_list = list(set(word_list))
 word_dict = {w: i for i, w in enumerate(word_list)}
+number_dict = {i: w for i, w in enumerate(word_list)}
 n_class = len(word_dict)
 
 # TextRNN Parameter
@@ -80,14 +81,8 @@ for epoch in range(5000):
     optimizer.step()
 
 input = [sen.split()[:2] for sen in sentences]
-print(input)
 
 # Predict
 hidden = Variable(torch.zeros(1, batch_size, n_hidden))
 predict = model(hidden, input_batch).data.max(1, keepdim=True)[1]
-output = []
-for pre in predict:
-    for key, value in word_dict.items():
-        if value == pre:
-            output.append(key)
-print(output)
+print([sen.split()[:2] for sen in sentences], '->', [number_dict[n.item()] for n in predict.squeeze()])

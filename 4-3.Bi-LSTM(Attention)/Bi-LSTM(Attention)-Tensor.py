@@ -3,6 +3,7 @@
   Reference : https://github.com/prakashpandey9/Text-Classification-Pytorch/blob/master/models/LSTM_Attn.py
 '''
 import tensorflow as tf
+import matplotlib.pyplot as plt
 import numpy as np
 
 tf.reset_default_graph()
@@ -10,8 +11,8 @@ tf.reset_default_graph()
 # Bi-LSTM(Attention) Parameters
 embedding_dim = 2
 n_hidden = 5 # number of hidden units in one cell
-sequence_length = 3 # all sentence is consist of 3 words
-num_classes = 2  # 0 or 1
+n_step = 3 # all sentence is consist of 3 words
+n_class = 2  # 0 or 1
 
 # 3 words sentences (=sequence_length is 3)
 sentences = ["i love you", "he loves me", "she likes baseball", "i hate you", "sorry for that", "this is awful"]
@@ -28,12 +29,12 @@ for sen in sentences:
 
 target_batch = []
 for out in labels:
-    target_batch.append(np.eye(num_classes)[out]) # ONE-HOT : To using Tensor Softmax Loss function
+    target_batch.append(np.eye(n_class)[out]) # ONE-HOT : To using Tensor Softmax Loss function
 
 # LSTM Model
-X = tf.placeholder(tf.int32, [None, sequence_length])
-Y = tf.placeholder(tf.int32, [None, num_classes])
-out = tf.Variable(tf.random_normal([n_hidden * 2, num_classes]))
+X = tf.placeholder(tf.int32, [None, n_step])
+Y = tf.placeholder(tf.int32, [None, n_class])
+out = tf.Variable(tf.random_normal([n_hidden * 2, n_class]))
 
 embedding = tf.Variable(tf.random_uniform([vocab_size, embedding_dim]))
 input = tf.nn.embedding_lookup(embedding, X) # [batch_size, len_seq, embedding_dim]
@@ -64,23 +65,28 @@ hypothesis = tf.nn.softmax(model)
 predictions = tf.argmax(hypothesis, 1)
 
 # Training
-init = tf.global_variables_initializer()
-sess = tf.Session()
-sess.run(init)
+with tf.Session() as sess:
+    init = tf.global_variables_initializer()
+    sess.run(init)
+    for epoch in range(5000):
+        _, loss, attention = sess.run([optimizer, cost, soft_attn_weights], feed_dict={X: input_batch, Y: target_batch})
+        if (epoch + 1)%1000 == 0:
+            print('Epoch:', '%06d' % (epoch + 1), 'cost =', '{:.6f}'.format(loss))
 
-for epoch in range(5000):
-    _, loss = sess.run([optimizer, cost], feed_dict={X: input_batch, Y: target_batch})
-    if (epoch + 1)%1000 == 0:
-        print('Epoch:', '%06d' % (epoch + 1), 'cost =', '{:.6f}'.format(loss))
+    # Test
+    test_text = 'sorry hate you'
+    tests = [np.asarray([word_dict[n] for n in test_text.split()])]
 
-# Test
-test_text = 'sorry hate you'
-tests = []
-tests.append(np.asarray([word_dict[n] for n in test_text.split()]))
+    predict = sess.run([predictions], feed_dict={X: tests})
+    result = predict[0][0]
+    if result == 0:
+        print(test_text,"is Bad Mean...")
+    else:
+        print(test_text,"is Good Mean!!")
 
-predict = sess.run([predictions], feed_dict={X: tests})
-result = predict[0][0]
-if result == 0:
-    print(test_text,"is Bad Mean...")
-else:
-    print(test_text,"is Good Mean!!")
+    fig = plt.figure(figsize=(6, 3)) # [batch_size, n_step]
+    ax = fig.add_subplot(1, 1, 1)
+    ax.matshow(attention, cmap='viridis')
+    ax.set_xticklabels([''] + ['first_word', 'second_word', 'third_word'], fontdict={'fontsize': 14}, rotation=90)
+    ax.set_yticklabels([''] + ['batch_1', 'batch_2', 'batch_3', 'batch_4', 'batch_5', 'batch_6'], fontdict={'fontsize': 14})
+    plt.show()

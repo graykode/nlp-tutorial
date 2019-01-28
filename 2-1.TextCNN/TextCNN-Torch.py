@@ -88,14 +88,12 @@ for epoch in range(5000):
 
 # Test
 test_text = 'sorry hate you'
-tests = []
-tests.append(np.asarray([word_dict[n] for n in test_text.split()]))
+tests = [np.asarray([word_dict[n] for n in test_text.split()])]
 test_batch = Variable(torch.LongTensor(tests))
 
 # Predict
 predict = model(test_batch).data.max(1, keepdim=True)[1]
-result = predict[0][0]
-if result == 0:
+if predict[0][0] == 0:
     print(test_text,"is Bad Mean...")
 else:
     print(test_text,"is Good Mean!!")

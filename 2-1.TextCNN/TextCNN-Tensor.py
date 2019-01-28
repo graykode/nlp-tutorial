@@ -1,22 +1,25 @@
 '''
   code by Tae Hwan Jung(Jeff Jung) @graykode
-  Reference : https://github.com/ioatr/textcnn
 '''
-import tensorflow as tf
 import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.autograd import Variable
+import torch.nn.functional as F
 
-tf.reset_default_graph()
+dtype = torch.FloatTensor
 
 # Text-CNN Parameter
 embedding_size = 2 # n-gram
 sequence_length = 3
-num_classes = 2 # 0 or 1
-filter_sizes = [2,2,2] # n-gram window
+num_classes = 2  # 0 or 1
+filter_sizes = [2, 2, 2] # n-gram window
 num_filters = 3
 
 # 3 words sentences (=sequence_length is 3)
-sentences = ["i love you","he loves me", "she likes baseball", "i hate you","sorry for that", "this is awful"]
-labels = [1,1,1,0,0,0] # 1 is good, 0 is not good.
+sentences = ["i love you", "he loves me", "she likes baseball", "i hate you", "sorry for that", "this is awful"]
+labels = [1, 1, 1, 0, 0, 0]  # 1 is good, 0 is not good.
 
 word_list = " ".join(sentences).split()
 word_list = list(set(word_list))
@@ -27,69 +30,69 @@ inputs = []
 for sen in sentences:
     inputs.append(np.asarray([word_dict[n] for n in sen.split()]))
 
-outputs = []
+targets = []
 for out in labels:
-    outputs.append(np.eye(num_classes)[out]) # ONE-HOT : To using Tensor Softmax Loss function
+    targets.append(out) # To using Torch Softmax Loss function
 
-# Model
-X = tf.placeholder(tf.int32, [None, sequence_length])
-Y = tf.placeholder(tf.int32, [None, num_classes])
+input_batch = Variable(torch.LongTensor(inputs))
+target_batch = Variable(torch.LongTensor(targets))
 
-W = tf.Variable(tf.random_uniform([vocab_size, embedding_size], -1.0, 1.0))
-embedded_chars = tf.nn.embedding_lookup(W, X) # [batch_size, sequence_length, embedding_size]
-embedded_chars = tf.expand_dims(embedded_chars, -1) # add one channel(=1) [batch_size, sequence_length, embedding_size, 1]
+class TextCNN(nn.Module):
+    def __init__(self):
+        super(TextCNN, self).__init__()
 
-pooled_outputs = []
-for i, filter_size in enumerate(filter_sizes):
-    filter_shape = [filter_size, embedding_size, 1, num_filters]
-    W = tf.Variable(tf.truncated_normal(filter_shape, stddev=0.1))
-    b = tf.Variable(tf.constant(0.1, shape=[num_filters]))
+        self.num_filters_total = num_filters * len(filter_sizes)
+        self.W = nn.Parameter(torch.empty(vocab_size, embedding_size).uniform_(-1, 1)).type(dtype)
+        self.Weight = nn.Parameter(torch.empty(self.num_filters_total, num_classes).uniform_(-1, 1)).type(dtype)
+        self.Bias = nn.Parameter(0.1 * torch.ones([num_classes])).type(dtype)
 
-    conv = tf.nn.conv2d(embedded_chars, # [batch_size, sequence_length, embedding_size, 1]
-                        # [filter_size(n-gram window), embedding_size, 1(=input_channel), num_filters(=3, output_channel)]
-                        W,
-                        strides=[1, 1, 1, 1],
-                        padding='VALID')
-    h = tf.nn.relu(tf.nn.bias_add(conv, b))
-    pooled = tf.nn.max_pool(h,
-                            ksize=[1, sequence_length - filter_size + 1, 1, 1], # [batch_size, filter_height, filter_width, channel]
-                            strides=[1, 1, 1, 1],
-                            padding='VALID')
-    pooled_outputs.append(pooled) # dim of pooled : [batch_size(=6), output_height(=1), output_width(=1), channel(=3)]
+    def forward(self, X):
+        embedded_chars = self.W[X] # [batch_size, sequence_length, sequence_length]
+        embedded_chars = embedded_chars.unsqueeze(1) # add channel(=1) [batch, channel(=1), sequence_length, embedding_size]
 
-num_filters_total = num_filters * len(filter_sizes)
-h_pool = tf.concat(pooled_outputs, len(filter_sizes)) # h_pool : [batch_size(=6), output_height(=1), output_width(=1), output_channel(=3) * 3]
-h_pool_flat = tf.reshape(h_pool, [-1, num_filters_total]) # [batch_size, output_height * output_width * (channel * 3)]
+        pooled_outputs = []
+        for filter_size in filter_sizes:
+            # conv : [input_channel(=1), output_channel(=3), (filter_height, filter_width), bias_option]
+            conv = nn.Conv2d(1, num_filters, (filter_size, embedding_size), bias=True)(embedded_chars)
+            h = F.relu(conv)
+            # mp : ((filter_height, filter_width))
+            mp = nn.MaxPool2d((sequence_length - filter_size + 1, 1))
+            # pooled : [batch_size(=6), output_height(=1), output_width(=1), output_channel(=3)]
+            pooled = mp(h).permute(0, 3, 2, 1)
+            pooled_outputs.append(pooled)
 
-# Model-Training
-Weight = tf.get_variable('W', shape=[num_filters_total, num_classes], initializer=tf.contrib.layers.xavier_initializer())
-Bias = tf.Variable(tf.constant(0.1, shape=[num_classes]))
-model = tf.nn.xw_plus_b(h_pool_flat, Weight, Bias)  # [batch_size, num_classes]
+        h_pool = torch.cat(pooled_outputs, len(filter_sizes)) # [batch_size(=6), output_height(=1), output_width(=1), output_channel(=3) * 3]
+        h_pool_flat = torch.reshape(h_pool, [-1, self.num_filters_total]) # [batch_size(=6), output_height * output_width * (output_channel * 3)]
 
-cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=model, labels=Y))
-optimizer = tf.train.AdamOptimizer(0.001).minimize(cost)
+        model = torch.mm(h_pool_flat, self.Weight) + self.Bias # [batch_size, num_classes]
+        return model
 
-# Model-Predict
-hypothesis = tf.nn.softmax(model)
-predictions = tf.argmax(hypothesis, 1)
+model = TextCNN()
+
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+
 # Training
-init = tf.global_variables_initializer()
-sess = tf.Session()
-sess.run(init)
-
 for epoch in range(5000):
-    _, loss = sess.run([optimizer, cost], feed_dict={X: inputs, Y: outputs})
-    if (epoch + 1)%1000 == 0:
-        print('Epoch:', '%06d' % (epoch + 1), 'cost =', '{:.6f}'.format(loss))
+    optimizer.zero_grad()
+    output = model(input_batch)
+
+    # output : [batch_size, num_classes], target_batch : [batch_size] (LongTensor, not one-hot)
+    loss = criterion(output, target_batch)
+    if (epoch + 1) % 100 == 0:
+        print('Epoch:', '%04d' % (epoch + 1), 'cost =', '{:.6f}'.format(loss))
+
+    loss.backward()
+    optimizer.step()
 
 # Test
 test_text = 'sorry hate you'
-tests = []
-tests.append(np.asarray([word_dict[n] for n in test_text.split()]))
+tests = [np.asarray([word_dict[n] for n in test_text.split()])]
+test_batch = Variable(torch.LongTensor(tests))
 
-predict = sess.run([predictions], feed_dict={X: tests})
-result = predict[0][0]
-if result == 0:
+# Predict
+predict = model(test_batch).data.max(1, keepdim=True)[1]
+if predict[0][0] == 0:
     print(test_text,"is Bad Mean...")
 else:
     print(test_text,"is Good Mean!!")

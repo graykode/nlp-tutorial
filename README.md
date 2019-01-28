@@ -5,7 +5,8 @@
 `nlp-tutorial` is a tutorial for who is studying NLP(Natural Language Processing) using **TensorFlow** and **Pytorch**. 
 
 - Most of the models in NLP were implemented with less than **100 lines** of code.(except comments or blank lines)
-- You can also learn Tensorflow or Pytorch. 
+
+  
 
 ## Curriculum
 
@@ -37,7 +38,7 @@
   - Paper - [Finding Structure in Time(1990)](http://psych.colorado.edu/~kimlab/Elman1990.pdf)
 - 3-2. [TextLSTM](https://github.com/graykode/nlp-tutorial/tree/master/3-2.TextLSTM) - **Autocomplete**
   - Paper - [LONG SHORT-TERM MEMORY(1997)](https://www.bioinf.jku.at/publications/older/2604.pdf)
-- 3-3. Bi-LSTM - **Predict Long Next Step Word**
+- 3-3. [Bi-LSTM](https://github.com/graykode/nlp-tutorial/tree/master/3-3.Bi-LSTM) - **Predict Long Next Step Word**
 
 
 
@@ -60,13 +61,15 @@
 
 
 
+## Depencencies
+
+- Python 2.7 or 3.5+
+- Tensorflow 1.12.0
+- Pytorch 0.4.1
+
+
+
 ## Author
 
 - Tae Hwan Jung(Jeff Jung) @graykode
 - Email : nlkey2022@gmail.com
-
-
-
-## Reference Code
-
-- [golbin/TensorFlow-Tutorials](https://github.com/golbin/TensorFlow-Tutorials)

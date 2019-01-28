@@ -17,6 +17,7 @@ sentence = (
 )
 
 word_dict = {w: i for i, w in enumerate(list(set(sentence.split())))}
+number_dict = {i: w for i, w in enumerate(list(set(sentence.split())))}
 n_class = len(word_dict)
 max_len = len(sentence.split())
 n_hidden = 5
@@ -73,10 +74,5 @@ for epoch in range(10000):
     optimizer.step()
 
 predict = model(input_batch).data.max(1, keepdim=True)[1]
-output = []
-for pre in [pre for pre in predict]:
-    for key, value in word_dict.items():
-        if value == pre:
-            output.append(key)
 print(sentence)
-print(output)
+print([number_dict[n.item()] for n in predict.squeeze()])

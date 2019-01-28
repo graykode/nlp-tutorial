@@ -10,8 +10,9 @@ from torch.autograd import Variable
 dtype = torch.FloatTensor
 
 char_arr = [c for c in 'abcdefghijklmnopqrstuvwxyz']
-num_dic = {n: i for i, n in enumerate(char_arr)}
-n_class = len(num_dic) # number of class(=number of vocab)
+word_dict = {n: i for i, n in enumerate(char_arr)}
+number_dict = {i: w for i, w in enumerate(char_arr)}
+n_class = len(word_dict) # number of class(=number of vocab)
 
 seq_data = ['make', 'need', 'coal', 'word', 'love', 'hate', 'live', 'home', 'hash', 'star']
 
@@ -23,8 +24,8 @@ def make_batch(seq_data):
     input_batch, target_batch = [], []
 
     for seq in seq_data:
-        input = [num_dic[n] for n in seq[:-1]] # 'm', 'a' , 'k' is input
-        target = num_dic[seq[-1]] # 'e' is target
+        input = [word_dict[n] for n in seq[:-1]] # 'm', 'a' , 'k' is input
+        target = word_dict[seq[-1]] # 'e' is target
         input_batch.append(np.eye(n_class)[input])
         target_batch.append(target)
 
@@ -70,14 +71,7 @@ for epoch in range(1000):
     loss.backward()
     optimizer.step()
 
-input = [sen[:3] for sen in seq_data]
-print(input)
+inputs = [sen[:3] for sen in seq_data]
 
 predict = model(input_batch).data.max(1, keepdim=True)[1]
-
-output = []
-for pre in [pre for pre in predict]:
-    for key, value in num_dic.items():
-        if value == pre:
-            output.append(key)
-print(output)
+print(inputs, '->', [number_dict[n.item()] for n in predict.squeeze()])

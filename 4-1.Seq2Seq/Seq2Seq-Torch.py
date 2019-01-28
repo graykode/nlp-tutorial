@@ -15,7 +15,7 @@ num_dic = {n: i for i, n in enumerate(char_arr)}
 seq_data = [['man', 'women'], ['black', 'white'], ['king', 'queen'], ['girl', 'boy'], ['up', 'down'], ['high', 'low']]
 
 # Seq2Seq Parameter
-max_len = 5
+n_step = 5
 n_hidden = 128
 n_class = len(num_dic)
 batch_size = len(seq_data)
@@ -25,7 +25,7 @@ def make_batch(seq_data):
 
     for seq in seq_data:
         for i in range(2):
-            seq[i] = seq[i] + 'P' * (max_len - len(seq[i]))
+            seq[i] = seq[i] + 'P' * (n_step - len(seq[i]))
 
         input = [num_dic[n] for n in seq[0]]
         output = [num_dic[n] for n in ('S' + seq[1])]

@@ -9,6 +9,7 @@ sentences = [ "i like dog", "i love coffee", "i hate milk"]
 word_list = " ".join(sentences).split()
 word_list = list(set(word_list))
 word_dict = {w: i for i, w in enumerate(word_list)}
+number_dict = {i: w for i, w in enumerate(word_list)}
 n_class = len(word_dict) # number of Vocabulary
 
 # NNLM Parameter
@@ -63,11 +64,4 @@ predict =  sess.run([prediction], feed_dict={X: input_batch})
 
 # Test
 input = [sen.split()[:2] for sen in sentences]
-print(input)
-
-output = []
-for pre in [pre for pre in predict[0]]:
-    for key, value in word_dict.items():
-        if value == pre:
-            output.append(key)
-print(output)
+print([sen.split()[:2] for sen in sentences], '->', [number_dict[n] for n in predict[0]])

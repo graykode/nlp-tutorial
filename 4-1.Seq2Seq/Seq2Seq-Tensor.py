@@ -15,9 +15,8 @@ num_dic = {n: i for i, n in enumerate(char_arr)}
 
 seq_data = [['man', 'women'], ['black', 'white'], ['king', 'queen'], ['girl', 'boy'], ['up', 'down'], ['high', 'low']]
 
-
 # Seq2Seq Parameter
-max_len = 5
+n_step = 5
 n_hidden = 128
 n_class = len(num_dic) # number of class(=number of vocab)
 
@@ -26,7 +25,7 @@ def make_batch(seq_data):
 
     for seq in seq_data:
         for i in range(2):
-            seq[i] = seq[i] + 'P' * (max_len - len(seq[i]))
+            seq[i] = seq[i] + 'P' * (n_step - len(seq[i]))
 
         input = [num_dic[n] for n in seq[0]]
         output = [num_dic[n] for n in ('S' + seq[1])]
@@ -75,10 +74,10 @@ for epoch in range(5000):
 def translate(word):
     seq_data = [word, 'P' * len(word)]
 
-    input_batch, output_batch, target_batch = make_batch([seq_data])
+    input_batch, output_batch, _ = make_batch([seq_data])
     prediction = tf.argmax(model, 2)
 
-    result = sess.run(prediction, feed_dict={enc_input: input_batch, dec_input: output_batch, targets: target_batch})
+    result = sess.run(prediction, feed_dict={enc_input: input_batch, dec_input: output_batch})
 
     decoded = [char_arr[i] for i in result[0]]
     end = decoded.index('E')

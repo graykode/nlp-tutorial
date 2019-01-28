@@ -7,8 +7,9 @@ import numpy as np
 tf.reset_default_graph()
 
 char_arr = [c for c in 'abcdefghijklmnopqrstuvwxyz']
-num_dic = {n: i for i, n in enumerate(char_arr)}
-n_class = len(num_dic) # number of class(=number of vocab)
+word_dict = {n: i for i, n in enumerate(char_arr)}
+number_dict = {i: w for i, w in enumerate(char_arr)}
+n_class = len(word_dict) # number of class(=number of vocab)
 
 seq_data = ['make', 'need', 'coal', 'word', 'love', 'hate', 'live', 'home', 'hash', 'star']
 
@@ -20,8 +21,8 @@ def make_batch(seq_data):
     input_batch, target_batch = [], []
 
     for seq in seq_data:
-        input = [num_dic[n] for n in seq[:-1]] # 'm', 'a' , 'k' is input
-        target = num_dic[seq[-1]] # 'e' is target
+        input = [word_dict[n] for n in seq[:-1]] # 'm', 'a' , 'k' is input
+        target = word_dict[seq[-1]] # 'e' is target
         input_batch.append(np.eye(n_class)[input])
         target_batch.append(np.eye(n_class)[target])
 
@@ -59,14 +60,7 @@ for epoch in range(1000):
     if (epoch + 1)%100 == 0:
         print('Epoch:', '%04d' % (epoch + 1), 'cost =', '{:.6f}'.format(loss))
 
-input = [sen[:3] for sen in seq_data]
-print(input)
+inputs = [sen[:3] for sen in seq_data]
 
 predict =  sess.run([prediction], feed_dict={X: input_batch})
-
-output = []
-for pre in [pre for pre in predict[0]]:
-    for key, value in num_dic.items():
-        if value == pre:
-            output.append(key)
-print(output)
+print(inputs, '->', [number_dict[n] for n in predict[0]])
