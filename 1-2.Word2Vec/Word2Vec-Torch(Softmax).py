@@ -90,4 +90,4 @@ for i, label in enumerate(word_list):
     x,y = float(W[i][0]), float(W[i][1])
     plt.scatter(x, y)
     plt.annotate(label, xy=(x, y), xytext=(5, 2), textcoords='offset points', ha='right', va='bottom')
-plt.show(word_list)
+plt.show()
