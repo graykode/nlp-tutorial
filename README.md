@@ -15,10 +15,9 @@
 - 1-2. [Word2Vec(Skip-gram)](https://github.com/graykode/nlp-tutorial/tree/master/1-2.Word2Vec) - **Embedding Words and Show Graph**
   - Paper - [Distributed Representations of Words and Phrases
     and their Compositionality(2013)](https://papers.nips.cc/paper/5021-distributed-representations-of-words-and-phrases-and-their-compositionality.pdf)
-- 1-3. FastText(Application Level) - **Sentence Classification**
+- 1-3. [FastText(Application Level)](https://github.com/graykode/nlp-tutorial/tree/master/1-3.FastText) - **Sentence Classification**
   - Site : http://fasttext.cc
   - Paper : [Bag of Tricks for Efficient Text Classification(2016)](https://arxiv.org/pdf/1607.01759.pdf)
-  - Usage : Google Colab
 
 
 
@@ -48,15 +47,16 @@
 - 4-2. [Seq2Seq with Attention](https://github.com/graykode/nlp-tutorial/tree/master/4-2.Seq2Seq(Attention)) - **Translate**
   - Paper - [Neural Machine Translation by Jointly Learning to Align and Translate(2014)](https://arxiv.org/abs/1409.0473)
 - 4-3. [Bi-LSTM with Attention](https://github.com/graykode/nlp-tutorial/tree/master/4-3.Bi-LSTM(Attention)) - **Binary Sentiment Classification**
-- 4-4. [The Transformer](https://github.com/graykode/nlp-tutorial/tree/master/4-4.Transformer) - **Translate**
-  - Paper - [Attention Is All You Need(2017)](https://arxiv.org/abs/1706.03762)
 
 
 
-#### 5. New Trend Model
+#### 5. Model based on Transformer
 
-- 5-1. BERT - **Classification Next Sentence & Predict Masked Tokens**
+- 5-1.  [The Transformer](https://github.com/graykode/nlp-tutorial/tree/master/5-1.Transformer) - **Translate**
+  - Paper - [Attention Is All You Need(2017)](https://arxiv.org/abs/1810.04805)
+- 5-2. [BERT](https://github.com/graykode/nlp-tutorial/tree/master/5-2.BERT) - **Classification Next Sentence & Predict Masked Tokens**
   - Paper - [BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding(2018)](https://arxiv.org/abs/1810.04805)
+
 
 
 
