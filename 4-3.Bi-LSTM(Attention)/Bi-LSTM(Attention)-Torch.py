@@ -45,12 +45,14 @@ class BiLSTM_Attention(nn.Module):
         self.lstm = nn.LSTM(embedding_dim, n_hidden, bidirectional=True)
         self.out = nn.Linear(n_hidden * 2, num_classes)
 
-    def attention_net(self, lstm_output, final_state):           # lstm_output : [batch_size, len_seq, n_hidden * num_directions(=2)]
-        hidden = final_state.view(-1, n_hidden * 2, 1)   # hidden : [batch_size, n_hidden * num_directions(=2), 1]
+    # lstm_output : [batch_size, n_step, n_hidden * num_directions(=2)], F matrix
+    def attention_net(self, lstm_output, final_state):
+        hidden = final_state.view(-1, n_hidden * 2, 1)   # hidden : [batch_size, n_hidden * num_directions(=2), 1(=n_layer)]
         attn_weights = torch.bmm(lstm_output, hidden).squeeze(2) # attn_weights : [batch_size, n_step]
         soft_attn_weights = F.softmax(attn_weights, 1)
-        new_hidden_state = torch.bmm(lstm_output.transpose(1, 2), soft_attn_weights.unsqueeze(2)).squeeze(2)
-        return new_hidden_state, soft_attn_weights.data.numpy() # new_hidden_state : [batch_size, n_hidden * num_directions(=2)]
+        # [batch_size, n_hidden * num_directions(=2), n_step] * [batch_size, n_step, 1] = [batch_size, n_hidden * num_directions(=2), 1]
+        context = torch.bmm(lstm_output.transpose(1, 2), soft_attn_weights.unsqueeze(2)).squeeze(2)
+        return context, soft_attn_weights.data.numpy() # context : [batch_size, n_hidden * num_directions(=2)]
 
     def forward(self, X):
         input = self.embedding(X) # input : [batch_size, len_seq, embedding_dim]

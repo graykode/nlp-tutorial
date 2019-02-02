@@ -24,9 +24,11 @@ tgt_vocab = {w: i for i, w in enumerate(set((sentences[1]+' '+sentences[2]).spli
 number_dict = {i: w for i, w in enumerate(set((sentences[1]+' '+sentences[2]).split()))}
 tgt_vocab_size = len(tgt_vocab)
 
-n_step = 5  # number of Step
+src_len = 5
+tgt_len = 5
+
 d_model = 512  # Embedding Size
-d_inner = 2048
+d_ff = 2048 # FeedForward dimension
 d_k = d_v = 64  # dimension of K(=Q), V
 n_layers = 6  # number of Encoder of Decoder Layer
 n_heads = 8  # number of heads in Multi-Head Attention
@@ -75,6 +77,7 @@ class MultiHeadAttention(nn.Module):
     def forward(self, Q, K, V, attn_mask=None):
         # q: [batch_size x len_q x d_model], k: [batch_size x len_k x d_model], v: [batch_size x len_k x d_model]
         residual, batch_size = Q, Q.size(0)
+        # (B, S, D) -proj-> (B, S, D) -split-> (B, S, H, W) -trans-> (B, H, S, W)
         q_s = self.W_Q(Q).view(batch_size, -1, n_heads, d_k).transpose(1,2)  # q_s: [batch_size x n_heads x len_q x d_k]
         k_s = self.W_K(K).view(batch_size, -1, n_heads, d_k).transpose(1,2)  # k_s: [batch_size x n_heads x len_k x d_k]
         v_s = self.W_V(V).view(batch_size, -1, n_heads, d_v).transpose(1,2)  # v_s: [batch_size x n_heads x len_k x d_v]
@@ -90,8 +93,8 @@ class MultiHeadAttention(nn.Module):
 class PoswiseFeedForwardNet(nn.Module):
     def __init__(self):
         super(PoswiseFeedForwardNet, self).__init__()
-        self.conv1 = nn.Conv1d(in_channels=d_model, out_channels=d_inner, kernel_size=1)
-        self.conv2 = nn.Conv1d(in_channels=d_inner, out_channels=d_model, kernel_size=1)
+        self.conv1 = nn.Conv1d(in_channels=d_model, out_channels=d_ff, kernel_size=1)
+        self.conv2 = nn.Conv1d(in_channels=d_ff, out_channels=d_model, kernel_size=1)
 
     def forward(self, inputs):
         residual = inputs # inputs : [batch_size, len_q, d_model]
@@ -127,7 +130,7 @@ class Encoder(nn.Module):
     def __init__(self):
         super(Encoder, self).__init__()
         self.src_emb = nn.Embedding(src_vocab_size, d_model)
-        self.pos_emb = nn.Embedding.from_pretrained(get_sinusoid_encoding_table(n_step+1 , d_model),freeze=True)
+        self.pos_emb = nn.Embedding.from_pretrained(get_sinusoid_encoding_table(src_len+1 , d_model),freeze=True)
         self.layers = nn.ModuleList([EncoderLayer() for _ in range(n_layers)])
 
     def forward(self, enc_inputs): # enc_inputs : [batch_size x source_len]
@@ -142,7 +145,7 @@ class Decoder(nn.Module):
     def __init__(self):
         super(Decoder, self).__init__()
         self.tgt_emb = nn.Embedding(tgt_vocab_size, d_model)
-        self.pos_emb = nn.Embedding.from_pretrained(get_sinusoid_encoding_table(n_step+1 , d_model),freeze=True)
+        self.pos_emb = nn.Embedding.from_pretrained(get_sinusoid_encoding_table(tgt_len+1 , d_model),freeze=True)
         self.layers = nn.ModuleList([DecoderLayer() for _ in range(n_layers)])
 
     def forward(self, dec_inputs, enc_inputs, enc_outputs): # dec_inputs : [batch_size x target_len]
@@ -198,11 +201,11 @@ predict, _, _, _ = model(enc_inputs, dec_inputs)
 predict = predict.data.max(1, keepdim=True)[1]
 print(sentences[0], '->', [number_dict[n.item()] for n in predict.squeeze()])
 
-print('first head of last enc_self_attns')
+print('first head of last state enc_self_attns')
 showgraph(enc_self_attns)
 
-print('first head of last dec_self_attns')
+print('first head of last state dec_self_attns')
 showgraph(dec_self_attns)
 
-print('first head of last dec_enc_attns')
+print('first head of last state dec_enc_attns')
 showgraph(dec_enc_attns)

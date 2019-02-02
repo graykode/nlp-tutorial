@@ -41,10 +41,10 @@ class Attention(nn.Module):
         self.out = nn.Linear(n_hidden * 2, n_class)
 
     def forward(self, enc_inputs, hidden, dec_inputs):
-        enc_inputs = enc_inputs.transpose(0, 1)  # enc_inputs: [max_len(=n_step, time step), batch_size, n_hidden]
-        dec_inputs = dec_inputs.transpose(0, 1)  # dec_inputs: [max_len(=n_step, time step), batch_size, n_hidden]
+        enc_inputs = enc_inputs.transpose(0, 1)  # enc_inputs: [n_step(=n_step, time step), batch_size, n_hidden]
+        dec_inputs = dec_inputs.transpose(0, 1)  # dec_inputs: [n_step(=n_step, time step), batch_size, n_hidden]
 
-        # enc_outputs : [max_len, batch_size, num_directions(=1) * n_hidden], matrix F
+        # enc_outputs : [n_step, batch_size, num_directions(=1) * n_hidden], matrix F
         # enc_hidden : [num_layers(=1) * num_directions(=1), batch_size, n_hidden]
         enc_outputs, enc_hidden = self.enc_cell(enc_inputs, hidden)
 
@@ -54,7 +54,7 @@ class Attention(nn.Module):
         model = Variable(torch.empty([n_step, 1, n_class]))
 
         for i in range(n_step):  # each time step
-            # dec_output : [max_len(=1), batch_size(=1), num_directions(=1) * n_hidden]
+            # dec_output : [n_step(=1), batch_size(=1), num_directions(=1) * n_hidden]
             # hidden : [num_layers(=1) * num_directions(=1), batch_size(=1), n_hidden]
             dec_output, hidden = self.dec_cell(dec_inputs[i].unsqueeze(0), hidden)
             attn_weights = self.get_att_weight(dec_output, enc_outputs)  # attn_weights : [1, 1, n_step]

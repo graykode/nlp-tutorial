@@ -50,12 +50,12 @@ output = tf.concat([output[0], output[1]], 2)                             # outp
 final_hidden_state = tf.concat([final_state[1][0], final_state[1][1]], 1) # final_hidden_state : [batch_size, n_hidden * num_directions(=2)]
 final_hidden_state = tf.expand_dims(final_hidden_state, 2)                # final_hidden_state : [batch_size, n_hidden * num_directions(=2), 1]
 
-attn_weights = tf.squeeze(tf.matmul(output, final_hidden_state), 2) # attn_weights : [batch_size, len_seq]
+attn_weights = tf.squeeze(tf.matmul(output, final_hidden_state), 2) # attn_weights : [batch_size, n_step]
 soft_attn_weights = tf.nn.softmax(attn_weights, 1)
-new_hidden_state = tf.matmul(tf.transpose(output, [0, 2, 1]), tf.expand_dims(soft_attn_weights, 2)) # new_hidden_state : [batch_size, n_hidden * num_directions(=2), 1]
-new_hidden_state = tf.squeeze(new_hidden_state, 2) # [batch_size, n_hidden * num_directions(=2)]
+context = tf.matmul(tf.transpose(output, [0, 2, 1]), tf.expand_dims(soft_attn_weights, 2)) # context : [batch_size, n_hidden * num_directions(=2), 1]
+context = tf.squeeze(context, 2) # [batch_size, n_hidden * num_directions(=2)]
 
-model = tf.matmul(new_hidden_state, out)
+model = tf.matmul(context, out)
 
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=model, labels=Y))
 optimizer = tf.train.AdamOptimizer(0.001).minimize(cost)

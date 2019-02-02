@@ -26,34 +26,34 @@ def make_batch(sentences):
     return input_batch, output_batch, target_batch
 
 # Model
-enc_inputs = tf.placeholder(tf.float32, [None, None, n_class])  # [batch_size, max_len, n_class]
-dec_inputs = tf.placeholder(tf.float32, [None, None, n_class])  # [batch_size, max_len, n_class]
-targets = tf.placeholder(tf.int64, [1, n_step])  # [batch_size, max_len], not one-hot
+enc_inputs = tf.placeholder(tf.float32, [None, None, n_class])  # [batch_size, n_step, n_class]
+dec_inputs = tf.placeholder(tf.float32, [None, None, n_class])  # [batch_size, n_step, n_class]
+targets = tf.placeholder(tf.int64, [1, n_step])  # [batch_size, n_step], not one-hot
 
 # Linear for attention
 attn = tf.Variable(tf.random_normal([n_hidden, n_hidden]))
 out = tf.Variable(tf.random_normal([n_hidden * 2, n_class]))
 
-def get_att_score(dec_output, enc_output):  # enc_output [max_len, n_hidden]
+def get_att_score(dec_output, enc_output):  # enc_output [n_step, n_hidden]
     score = tf.squeeze(tf.matmul(enc_output, attn), 0)  # score : [n_hidden]
     dec_output = tf.squeeze(dec_output, [0, 1])  # dec_output : [n_hidden]
     return tf.tensordot(dec_output, score, 1)  # inner product make scalar value
 
 def get_att_weight(dec_output, enc_outputs):
-    attn_scores = []  # list of attention scalar : [max_len]
-    enc_outputs = tf.transpose(enc_outputs, [1, 0, 2])  # enc_outputs : [max_len, batch_size, n_hidden]
+    attn_scores = []  # list of attention scalar : [n_step]
+    enc_outputs = tf.transpose(enc_outputs, [1, 0, 2])  # enc_outputs : [n_step, batch_size, n_hidden]
     for i in range(n_step):
         attn_scores.append(get_att_score(dec_output, enc_outputs[i]))
 
     # Normalize scores to weights in range 0 to 1
-    return tf.reshape(tf.nn.softmax(attn_scores), [1, 1, -1])  # [1, 1, max_len]
+    return tf.reshape(tf.nn.softmax(attn_scores), [1, 1, -1])  # [1, 1, n_step]
 
 model = []
 Attention = []
 with tf.variable_scope('encode'):
     enc_cell = tf.nn.rnn_cell.BasicRNNCell(n_hidden)
     enc_cell = tf.nn.rnn_cell.DropoutWrapper(enc_cell, output_keep_prob=0.5)
-    # enc_outputs : [batch_size(=1), max_len(=decoder_step), n_hidden(=128)]
+    # enc_outputs : [batch_size(=1), n_step(=decoder_step), n_hidden(=128)]
     # enc_hidden : [batch_size(=1), n_hidden(=128)]
     enc_outputs, enc_hidden = tf.nn.dynamic_rnn(enc_cell, enc_inputs, dtype=tf.float32)
 
@@ -75,10 +75,10 @@ with tf.variable_scope('decode'):
         dec_output = tf.squeeze(dec_output, 0)  # [1, n_step]
         context = tf.squeeze(context, 1)  # [1, n_hidden]
 
-        model.append(tf.matmul(tf.concat((dec_output, context), 1), out))  # [max_len, batch_size(=1), n_class]
+        model.append(tf.matmul(tf.concat((dec_output, context), 1), out))  # [n_step, batch_size(=1), n_class]
 
 trained_attn = tf.stack([Attention[0], Attention[1], Attention[2], Attention[3], Attention[4]], 0)  # to show attention matrix
-model = tf.transpose(model, [1, 0, 2])  # model : [max_len, n_class]
+model = tf.transpose(model, [1, 0, 2])  # model : [n_step, n_class]
 prediction = tf.argmax(model, 2)
 cost = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=model, labels=targets))
 optimizer = tf.train.AdamOptimizer(0.001).minimize(cost)
