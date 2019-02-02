@@ -1,0 +1,6 @@
+﻿__label__1 i love you
+__label__1 he loves me
+__label__1 she likes baseball
+__label__0 i hate you
+__label__0 sorry for that
+__label__0 this is awful
