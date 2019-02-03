@@ -39,6 +39,7 @@ class NNLM(nn.Module):
         super(NNLM, self).__init__()
 
         self.H = nn.Parameter(torch.randn(n_step * n_class, n_hidden).type(dtype))
+        self.W = nn.Parameter(torch.randn(n_step * n_class, n_class).type(dtype))
         self.d = nn.Parameter(torch.randn(n_hidden).type(dtype))
         self.U = nn.Parameter(torch.randn(n_hidden, n_class).type(dtype))
         self.b = nn.Parameter(torch.randn(n_class).type(dtype))
@@ -46,7 +47,7 @@ class NNLM(nn.Module):
     def forward(self, X):
         input = X.view(-1, n_step * n_class) # [batch_size, n_step * n_class]
         tanh = nn.functional.tanh(self.d + torch.mm(input, self.H)) # [batch_size, n_hidden]
-        output = torch.mm(tanh, self.U) + self.b # [batch_size, n_class]
+        output = self.b + torch.mm(input, self.W) + torch.mm(tanh, self.U) # [batch_size, n_class]
         return output
 
 model = NNLM()
