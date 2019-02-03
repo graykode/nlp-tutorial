@@ -73,7 +73,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 # Training
-for epoch in range(50):
+for epoch in range(5000):
     optimizer.zero_grad()
     output, attention = model(input_batch)
     loss = criterion(output, target_batch)
