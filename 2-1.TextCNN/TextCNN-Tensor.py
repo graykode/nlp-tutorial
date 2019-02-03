@@ -55,7 +55,6 @@ for i, filter_size in enumerate(filter_sizes):
                             strides=[1, 1, 1, 1],
                             padding='VALID')
     pooled_outputs.append(pooled) # dim of pooled : [batch_size(=6), output_height(=1), output_width(=1), channel(=1)]
-    print(pooled.shape)
 
 num_filters_total = num_filters * len(filter_sizes)
 h_pool = tf.concat(pooled_outputs, num_filters) # h_pool : [batch_size(=6), output_height(=1), output_width(=1), channel(=1) * 3]
@@ -66,7 +65,6 @@ Weight = tf.get_variable('W', shape=[num_filters_total, num_classes],
                     initializer=tf.contrib.layers.xavier_initializer())
 Bias = tf.Variable(tf.constant(0.1, shape=[num_classes]))
 model = tf.nn.xw_plus_b(h_pool_flat, Weight, Bias)  
-print('model ', model.shape)
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=model, labels=Y))
 optimizer = tf.train.AdamOptimizer(0.001).minimize(cost)
 
