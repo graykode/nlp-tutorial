@@ -78,7 +78,7 @@ init = tf.global_variables_initializer()
 sess = tf.Session()
 sess.run(init)
 
-for epoch in range(1000):
+for epoch in range(5000):
     _, loss = sess.run([optimizer, cost], feed_dict={X: inputs, Y: outputs})
     if (epoch + 1)%1000 == 0:
         print('Epoch:', '%06d' % (epoch + 1), 'cost =', '{:.6f}'.format(loss))
