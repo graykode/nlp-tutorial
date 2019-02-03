@@ -204,12 +204,12 @@ model = Transformer()
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-for epoch in range(10):
+for epoch in range(100):
     optimizer.zero_grad()
     enc_inputs, dec_inputs, target_batch = make_batch(sentences)
     outputs, enc_self_attns, dec_self_attns, dec_enc_attns = model(enc_inputs, dec_inputs)
     loss = criterion(outputs, target_batch.contiguous().view(-1))
-    if (epoch + 1) % 2 == 0:
+    if (epoch + 1) % 20 == 0:
         print('Epoch:', '%04d' % (epoch + 1), 'cost =', '{:.6f}'.format(loss))
     loss.backward()
     optimizer.step()
