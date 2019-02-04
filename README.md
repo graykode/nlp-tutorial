@@ -71,7 +71,7 @@
 
 
 
-## Depencencies
+## Dependencies
 
 - Python 3.5+
 - Tensorflow 1.12.0+
