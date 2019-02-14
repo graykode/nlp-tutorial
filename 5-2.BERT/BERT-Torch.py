@@ -171,7 +171,7 @@ def make_batch():
             masked_tokens.append(input_ids[pos])
             if random() < 0.8:  # 80%
                 input_ids[pos] = word_dict['[MASK]'] # make mask
-            if random() < 0.5:  # 10%
+            elif random() < 0.5:  # 10%
                 index = randint(0, vocab_size - 1) # random index in vocabulary
                 input_ids[pos] = word_dict[number_dict[index]] # replace
 
