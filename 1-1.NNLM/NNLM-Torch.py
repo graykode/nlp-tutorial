@@ -46,7 +46,7 @@ class NNLM(nn.Module):
 
     def forward(self, X):
         input = X.view(-1, n_step * n_class) # [batch_size, n_step * n_class]
-        tanh = nn.functional.tanh(self.d + torch.mm(input, self.H)) # [batch_size, n_hidden]
+        tanh = torch.tanh(self.d + torch.mm(input, self.H)) # [batch_size, n_hidden]
         output = self.b + torch.mm(input, self.W) + torch.mm(tanh, self.U) # [batch_size, n_class]
         return output
 
