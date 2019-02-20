@@ -16,8 +16,9 @@ number_dict = {i: w for i, w in enumerate(word_list)}
 n_class = len(word_dict) # number of Vocabulary
 
 # NNLM Parameter
-n_step = 2 # n-1
-n_hidden = 2 # h
+n_step = 2 # n-1 in paper
+n_hidden = 2 # h in paper
+m = 2 # m in paper
 
 def make_batch(sentences):
     input_batch = []
@@ -28,7 +29,7 @@ def make_batch(sentences):
         input = [word_dict[n] for n in word[:-1]]
         target = word_dict[word[-1]]
 
-        input_batch.append(np.eye(n_class)[input])
+        input_batch.append(input)
         target_batch.append(target)
 
     return input_batch, target_batch
@@ -37,17 +38,18 @@ def make_batch(sentences):
 class NNLM(nn.Module):
     def __init__(self):
         super(NNLM, self).__init__()
-
-        self.H = nn.Parameter(torch.randn(n_step * n_class, n_hidden).type(dtype))
-        self.W = nn.Parameter(torch.randn(n_step * n_class, n_class).type(dtype))
+        self.C = nn.Embedding(n_class, m)
+        self.H = nn.Parameter(torch.randn(n_step * m, n_hidden).type(dtype))
+        self.W = nn.Parameter(torch.randn(n_step * m, n_class).type(dtype))
         self.d = nn.Parameter(torch.randn(n_hidden).type(dtype))
         self.U = nn.Parameter(torch.randn(n_hidden, n_class).type(dtype))
         self.b = nn.Parameter(torch.randn(n_class).type(dtype))
 
     def forward(self, X):
-        input = X.view(-1, n_step * n_class) # [batch_size, n_step * n_class]
-        tanh = torch.tanh(self.d + torch.mm(input, self.H)) # [batch_size, n_hidden]
-        output = self.b + torch.mm(input, self.W) + torch.mm(tanh, self.U) # [batch_size, n_class]
+        X = self.C(X)
+        X = X.view(-1, n_step * m) # [batch_size, n_step * n_class]
+        tanh = torch.tanh(self.d + torch.mm(X, self.H)) # [batch_size, n_hidden]
+        output = self.b + torch.mm(X, self.W) + torch.mm(tanh, self.U) # [batch_size, n_class]
         return output
 
 model = NNLM()
@@ -56,7 +58,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 input_batch, target_batch = make_batch(sentences)
-input_batch = Variable(torch.Tensor(input_batch))
+input_batch = Variable(torch.LongTensor(input_batch))
 target_batch = Variable(torch.LongTensor(target_batch))
 
 # Training
