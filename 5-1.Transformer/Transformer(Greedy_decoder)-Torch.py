@@ -52,31 +52,34 @@ def get_sinusoid_encoding_table(n_position, d_model):
 def get_attn_pad_mask(seq_q, seq_k):
     batch_size, len_q = seq_q.size()
     batch_size, len_k = seq_k.size()
-    pad_attn_mask = seq_k.data.eq(0).unsqueeze(1)  # batch_size x 1 x len_k(=len_q)
+    # eq(zero) is PAD token
+    pad_attn_mask = seq_k.data.eq(0).unsqueeze(1)  # batch_size x 1 x len_k(=len_q), one is masking
     return pad_attn_mask.expand(batch_size, len_q, len_k)  # batch_size x len_q x len_k
 
-class ScaledDotProductAttention(nn.Module):
+def get_attn_subsequent_mask(seq):
+    attn_shape = [seq.size(0), seq.size(1), seq.size(1)]
+    subsequent_mask = np.triu(np.ones(attn_shape), k=1)
+    subsequent_mask = torch.from_numpy(subsequent_mask).byte()
+    return subsequent_mask
 
+class ScaledDotProductAttention(nn.Module):
     def __init__(self):
         super(ScaledDotProductAttention, self).__init__()
 
-    def forward(self, Q, K, V, attn_mask=None):
+    def forward(self, Q, K, V, attn_mask):
         scores = torch.matmul(Q, K.transpose(-1, -2)) / np.sqrt(d_k) # scores : [batch_size x n_heads x len_q(=len_k) x len_k(=len_q)]
-        if attn_mask is not None:
-            scores.masked_fill_(attn_mask, -1e9)
+        scores.masked_fill_(attn_mask, -1e9) # Fills elements of self tensor with value where mask is one.
         attn = nn.Softmax(dim=-1)(scores)
         context = torch.matmul(attn, V)
         return context, attn
 
 class MultiHeadAttention(nn.Module):
-
     def __init__(self):
         super(MultiHeadAttention, self).__init__()
         self.W_Q = nn.Linear(d_model, d_k * n_heads)
         self.W_K = nn.Linear(d_model, d_k * n_heads)
         self.W_V = nn.Linear(d_model, d_v * n_heads)
-
-    def forward(self, Q, K, V, attn_mask=None):
+    def forward(self, Q, K, V, attn_mask):
         # q: [batch_size x len_q x d_model], k: [batch_size x len_k x d_model], v: [batch_size x len_k x d_model]
         residual, batch_size = Q, Q.size(0)
         # (B, S, D) -proj-> (B, S, D) -split-> (B, S, H, W) -trans-> (B, H, S, W)
@@ -84,16 +87,15 @@ class MultiHeadAttention(nn.Module):
         k_s = self.W_K(K).view(batch_size, -1, n_heads, d_k).transpose(1,2)  # k_s: [batch_size x n_heads x len_k x d_k]
         v_s = self.W_V(V).view(batch_size, -1, n_heads, d_v).transpose(1,2)  # v_s: [batch_size x n_heads x len_k x d_v]
 
-        if attn_mask is not None: # attn_mask : [batch_size x len_q x len_k]
-            attn_mask = attn_mask.unsqueeze(1).repeat(1, n_heads, 1, 1) # attn_mask : [batch_size x n_heads x len_q x len_k]
+        attn_mask = attn_mask.unsqueeze(1).repeat(1, n_heads, 1, 1) # attn_mask : [batch_size x n_heads x len_q x len_k]
+
         # context: [batch_size x n_heads x len_q x d_v], attn: [batch_size x n_heads x len_q(=len_k) x len_k(=len_q)]
-        context, attn = ScaledDotProductAttention()(q_s, k_s, v_s, attn_mask=attn_mask)
+        context, attn = ScaledDotProductAttention()(q_s, k_s, v_s, attn_mask)
         context = context.transpose(1, 2).contiguous().view(batch_size, -1, n_heads * d_v) # context: [batch_size x len_q x n_heads * d_v]
         output = nn.Linear(n_heads * d_v, d_model)(context)
         return nn.LayerNorm(d_model)(output + residual), attn # output: [batch_size x len_q x d_model]
 
 class PoswiseFeedForwardNet(nn.Module):
-
     def __init__(self):
         super(PoswiseFeedForwardNet, self).__init__()
         self.conv1 = nn.Conv1d(in_channels=d_model, out_channels=d_ff, kernel_size=1)
@@ -106,33 +108,30 @@ class PoswiseFeedForwardNet(nn.Module):
         return nn.LayerNorm(d_model)(output + residual)
 
 class EncoderLayer(nn.Module):
-
     def __init__(self):
         super(EncoderLayer, self).__init__()
         self.enc_self_attn = MultiHeadAttention()
         self.pos_ffn = PoswiseFeedForwardNet()
 
-    def forward(self, enc_inputs):
-        enc_outputs, attn = self.enc_self_attn(enc_inputs, enc_inputs, enc_inputs) # enc_inputs to same Q,K,V
+    def forward(self, enc_inputs, enc_self_attn_mask):
+        enc_outputs, attn = self.enc_self_attn(enc_inputs, enc_inputs, enc_inputs, enc_self_attn_mask) # enc_inputs to same Q,K,V
         enc_outputs = self.pos_ffn(enc_outputs) # enc_outputs: [batch_size x len_q x d_model]
         return enc_outputs, attn
 
 class DecoderLayer(nn.Module):
-
     def __init__(self):
         super(DecoderLayer, self).__init__()
         self.dec_self_attn = MultiHeadAttention()
         self.dec_enc_attn = MultiHeadAttention()
         self.pos_ffn = PoswiseFeedForwardNet()
 
-    def forward(self, dec_inputs, enc_outputs, enc_attn_mask, dec_attn_mask=None):
-        dec_outputs, dec_self_attn = self.dec_self_attn(dec_inputs, dec_inputs, dec_inputs, dec_attn_mask)
-        dec_outputs, dec_enc_attn = self.dec_enc_attn(dec_outputs, enc_outputs, enc_outputs, enc_attn_mask)
+    def forward(self, dec_inputs, enc_outputs, dec_self_attn_mask, dec_enc_attn_mask):
+        dec_outputs, dec_self_attn = self.dec_self_attn(dec_inputs, dec_inputs, dec_inputs, dec_self_attn_mask)
+        dec_outputs, dec_enc_attn = self.dec_enc_attn(dec_outputs, enc_outputs, enc_outputs, dec_enc_attn_mask)
         dec_outputs = self.pos_ffn(dec_outputs)
         return dec_outputs, dec_self_attn, dec_enc_attn
 
 class Encoder(nn.Module):
-
     def __init__(self):
         super(Encoder, self).__init__()
         self.src_emb = nn.Embedding(src_vocab_size, d_model)
@@ -141,44 +140,44 @@ class Encoder(nn.Module):
 
     def forward(self, enc_inputs): # enc_inputs : [batch_size x source_len]
         enc_outputs = self.src_emb(enc_inputs) + self.pos_emb(torch.LongTensor([[1,2,3,4,5]]))
+        enc_self_attn_mask = get_attn_pad_mask(enc_inputs, enc_inputs)
         enc_self_attns = []
         for layer in self.layers:
-            enc_outputs, enc_self_attn = layer(enc_outputs)
+            enc_outputs, enc_self_attn = layer(enc_outputs, enc_self_attn_mask)
             enc_self_attns.append(enc_self_attn)
         return enc_outputs, enc_self_attns
 
 class Decoder(nn.Module):
-
     def __init__(self):
         super(Decoder, self).__init__()
         self.tgt_emb = nn.Embedding(tgt_vocab_size, d_model)
         self.pos_emb = nn.Embedding.from_pretrained(get_sinusoid_encoding_table(tgt_len+1 , d_model),freeze=True)
         self.layers = nn.ModuleList([DecoderLayer() for _ in range(n_layers)])
 
-    def forward(self, dec_inputs, enc_inputs, enc_outputs, dec_attn_mask=None): # dec_inputs : [batch_size x target_len]
+    def forward(self, dec_inputs, enc_inputs, enc_outputs): # dec_inputs : [batch_size x target_len]
         dec_outputs = self.tgt_emb(dec_inputs) + self.pos_emb(torch.LongTensor([[1,2,3,4,5]]))
-        dec_enc_attn_pad_mask = get_attn_pad_mask(dec_inputs, enc_inputs)
+        dec_self_attn_pad_mask = get_attn_pad_mask(dec_inputs, dec_inputs)
+        dec_self_attn_subsequent_mask = get_attn_subsequent_mask(dec_inputs)
+        dec_self_attn_mask = torch.gt((dec_self_attn_pad_mask + dec_self_attn_subsequent_mask), 0)
+
+        dec_enc_attn_mask = get_attn_pad_mask(dec_inputs, enc_inputs)
 
         dec_self_attns, dec_enc_attns = [], []
         for layer in self.layers:
-            dec_outputs, dec_self_attn, dec_enc_attn = layer(dec_outputs, enc_outputs,
-                                                             enc_attn_mask=dec_enc_attn_pad_mask,
-                                                             dec_attn_mask=dec_attn_mask)
+            dec_outputs, dec_self_attn, dec_enc_attn = layer(dec_outputs, enc_outputs, dec_self_attn_mask, dec_enc_attn_mask)
             dec_self_attns.append(dec_self_attn)
             dec_enc_attns.append(dec_enc_attn)
         return dec_outputs, dec_self_attns, dec_enc_attns
 
 class Transformer(nn.Module):
-
     def __init__(self):
         super(Transformer, self).__init__()
         self.encoder = Encoder()
         self.decoder = Decoder()
         self.projection = nn.Linear(d_model, tgt_vocab_size, bias=False)
-
-    def forward(self, enc_inputs, dec_inputs, decoder_mask=None):
+    def forward(self, enc_inputs, dec_inputs):
         enc_outputs, enc_self_attns = self.encoder(enc_inputs)
-        dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_inputs, enc_outputs, decoder_mask)
+        dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_inputs, enc_outputs)
         dec_logits = self.projection(dec_outputs) # dec_logits : [batch_size x src_vocab_size x tgt_vocab_size]
         return dec_logits.view(-1, dec_logits.size(-1)), enc_self_attns, dec_self_attns, dec_enc_attns
 
@@ -192,18 +191,16 @@ def greedy_decoder(model, enc_input, start_symbol):
     :param start_symbol: The start symbol. In this example it is 'S' which corresponds to index 4
     :return: The target input
     """
-    memory, attention = model.encoder(enc_input)
-    dec_input = torch.ones(1, 5).fill_(0).type_as(enc_input.data)
-    dec_mask = torch.from_numpy(np.triu(np.ones((1, 5, 5)), 1).astype('uint8')) == 0
+    enc_outputs, enc_self_attns = model.encoder(enc_input)
+    dec_input = torch.zeros(1, 5).type_as(enc_input.data)
     next_symbol = start_symbol
     for i in range(0, 5):
         dec_input[0][i] = next_symbol
-        out = model.decoder(Variable(dec_input), enc_input, memory, dec_mask)
-        projected = model.projection(out[0])
-        prob = projected.view(-1, projected.size(-1))
-        prob = prob.data.max(1, keepdim=True)[1]
+        dec_outputs, _, _ = model.decoder(dec_input, enc_input, enc_outputs)
+        projected = model.projection(dec_outputs)
+        prob = projected.squeeze(0).max(dim=-1, keepdim=False)[1]
         next_word = prob.data[i]
-        next_symbol = next_word[0]
+        next_symbol = next_word.item()
     return dec_input
 
 def showgraph(attn):
@@ -232,7 +229,7 @@ for epoch in range(100):
 	optimizer.step()
 
 # Test
-greedy_dec_input = greedy_decoder(model, enc_inputs, start_symbol=4)
+greedy_dec_input = greedy_decoder(model, enc_inputs, start_symbol=tgt_vocab["S"])
 predict, _, _, _ = model(enc_inputs, greedy_dec_input)
 predict = predict.data.max(1, keepdim=True)[1]
 print(sentences[0], '->', [number_dict[n.item()] for n in predict.squeeze()])
