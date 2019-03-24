@@ -3,14 +3,13 @@
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 
 dtype = torch.FloatTensor
 # S: Symbol that shows starting of decoding input
 # E: Symbol that shows starting of decoding output
-# P: Symbol that will fill in blank sequence if current batch data size is short than time steps
+# P: Symbol that shows ending of encoding input
 sentences = ['ich mochte ein bier P', 'S i want a beer', 'i want a beer E']
 
 word_list = " ".join(sentences).split()
@@ -28,7 +27,7 @@ def make_batch(sentences):
     target_batch = [[word_dict[n] for n in sentences[2].split()]]
 
     # make tensor
-    return Variable(torch.Tensor(input_batch)), Variable(torch.Tensor(output_batch)), Variable(torch.LongTensor(target_batch))
+    return torch.Tensor(input_batch), torch.Tensor(output_batch), torch.LongTensor(target_batch)
 
 class Attention(nn.Module):
     def __init__(self):
@@ -51,7 +50,7 @@ class Attention(nn.Module):
         trained_attn = []
         hidden = enc_hidden
         n_step = len(dec_inputs)
-        model = Variable(torch.empty([n_step, 1, n_class]))
+        model = torch.empty([n_step, 1, n_class])
 
         for i in range(n_step):  # each time step
             # dec_output : [n_step(=1), batch_size(=1), num_directions(=1) * n_hidden]
@@ -71,7 +70,7 @@ class Attention(nn.Module):
 
     def get_att_weight(self, dec_output, enc_outputs):  # get attention weight one 'dec_output' with 'enc_outputs'
         n_step = len(enc_outputs)
-        attn_scores = Variable(torch.zeros(n_step))  # attn_scores : [n_step]
+        attn_scores = torch.zeros(n_step)  # attn_scores : [n_step]
 
         for i in range(n_step):
             attn_scores[i] = self.get_att_score(dec_output, enc_outputs[i])
@@ -86,7 +85,7 @@ class Attention(nn.Module):
 input_batch, output_batch, target_batch = make_batch(sentences)
 
 # hidden : [num_layers(=1) * num_directions(=1), batch_size, n_hidden]
-hidden = Variable(torch.zeros(1, 1, n_hidden))
+hidden = torch.zeros(1, 1, n_hidden)
 
 model = Attention()
 criterion = nn.CrossEntropyLoss()
