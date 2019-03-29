@@ -105,7 +105,9 @@ for epoch in range(2000):
     optimizer.step()
 
 # Test
-predict, trained_attn = model(input_batch, hidden, output_batch)
+test_batch = [np.eye(n_class)[[word_dict[n] for n in 'SPPPP']]]
+test_batch = Variable(torch.Tensor(test_batch))
+predict, trained_attn = model(input_batch, hidden, test_batch)
 predict = predict.data.max(1, keepdim=True)[1]
 print(sentences[0], '->', [number_dict[n.item()] for n in predict.squeeze()])
 
