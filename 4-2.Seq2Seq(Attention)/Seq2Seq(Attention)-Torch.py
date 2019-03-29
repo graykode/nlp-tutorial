@@ -41,8 +41,8 @@ class Attention(nn.Module):
         self.out = nn.Linear(n_hidden * 2, n_class)
 
     def forward(self, enc_inputs, hidden, dec_inputs):
-        enc_inputs = enc_inputs.transpose(0, 1)  # enc_inputs: [n_step(=n_step, time step), batch_size, n_hidden]
-        dec_inputs = dec_inputs.transpose(0, 1)  # dec_inputs: [n_step(=n_step, time step), batch_size, n_hidden]
+        enc_inputs = enc_inputs.transpose(0, 1)  # enc_inputs: [n_step(=n_step, time step), batch_size, n_class]
+        dec_inputs = dec_inputs.transpose(0, 1)  # dec_inputs: [n_step(=n_step, time step), batch_size, n_class]
 
         # enc_outputs : [n_step, batch_size, num_directions(=1) * n_hidden], matrix F
         # enc_hidden : [num_layers(=1) * num_directions(=1), batch_size, n_hidden]
