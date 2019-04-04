@@ -17,7 +17,7 @@ maxlen = 512
 batch_size = 6
 max_pred = 20 # max tokens of prediction
 n_layers = 12
-n_heads = 8
+n_heads = 12
 d_model = 768
 d_ff = 768*4 # 4*d_model, FeedForward dimension
 d_k = d_v = 64  # dimension of K(=Q), V
