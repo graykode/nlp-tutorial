@@ -17,10 +17,12 @@ dtype = torch.FloatTensor
 sentences = ['ich mochte ein bier P', 'S i want a beer', 'i want a beer E']
 
 # Transformer Parameters
-src_vocab = {w: i for i, w in enumerate(sentences[0].split())}
+# Padding Should be Zero index
+src_vocab = {'P' : 0, 'ich' : 1, 'mochte' : 2, 'ein' : 3, 'bier' : 4}
 src_vocab_size = len(src_vocab)
-tgt_vocab = {w: i for i, w in enumerate(set((sentences[1]+' '+sentences[2]).split()))}
-number_dict = {i: w for i, w in enumerate(set((sentences[1]+' '+sentences[2]).split()))}
+
+tgt_vocab = {'P' : 0, 'i' : 1, 'want' : 2, 'a' : 3, 'beer' : 4, 'S' : 5, 'E' : 6}
+number_dict = {i: w for i, w in enumerate(tgt_vocab)}
 tgt_vocab_size = len(tgt_vocab)
 
 src_len = 5
@@ -50,6 +52,7 @@ def get_sinusoid_encoding_table(n_position, d_model):
     return torch.FloatTensor(sinusoid_table)
 
 def get_attn_pad_mask(seq_q, seq_k):
+    print(seq_q)
     batch_size, len_q = seq_q.size()
     batch_size, len_k = seq_k.size()
     # eq(zero) is PAD token
@@ -135,11 +138,11 @@ class Encoder(nn.Module):
     def __init__(self):
         super(Encoder, self).__init__()
         self.src_emb = nn.Embedding(src_vocab_size, d_model)
-        self.pos_emb = nn.Embedding.from_pretrained(get_sinusoid_encoding_table(src_len+1 , d_model),freeze=True)
+        self.pos_emb = nn.Embedding.from_pretrained(get_sinusoid_encoding_table(src_vocab_size, d_model),freeze=True)
         self.layers = nn.ModuleList([EncoderLayer() for _ in range(n_layers)])
 
     def forward(self, enc_inputs): # enc_inputs : [batch_size x source_len]
-        enc_outputs = self.src_emb(enc_inputs) + self.pos_emb(torch.LongTensor([[1,2,3,4,5]]))
+        enc_outputs = self.src_emb(enc_inputs) + self.pos_emb(torch.LongTensor([[1,2,3,4,0]]))
         enc_self_attn_mask = get_attn_pad_mask(enc_inputs, enc_inputs)
         enc_self_attns = []
         for layer in self.layers:
@@ -151,11 +154,11 @@ class Decoder(nn.Module):
     def __init__(self):
         super(Decoder, self).__init__()
         self.tgt_emb = nn.Embedding(tgt_vocab_size, d_model)
-        self.pos_emb = nn.Embedding.from_pretrained(get_sinusoid_encoding_table(tgt_len+1 , d_model),freeze=True)
+        self.pos_emb = nn.Embedding.from_pretrained(get_sinusoid_encoding_table(tgt_vocab_size, d_model),freeze=True)
         self.layers = nn.ModuleList([DecoderLayer() for _ in range(n_layers)])
 
     def forward(self, dec_inputs, enc_inputs, enc_outputs): # dec_inputs : [batch_size x target_len]
-        dec_outputs = self.tgt_emb(dec_inputs) + self.pos_emb(torch.LongTensor([[1,2,3,4,5]]))
+        dec_outputs = self.tgt_emb(dec_inputs) + self.pos_emb(torch.LongTensor([[5,1,2,3,4]]))
         dec_self_attn_pad_mask = get_attn_pad_mask(dec_inputs, dec_inputs)
         dec_self_attn_subsequent_mask = get_attn_subsequent_mask(dec_inputs)
         dec_self_attn_mask = torch.gt((dec_self_attn_pad_mask + dec_self_attn_subsequent_mask), 0)
@@ -218,15 +221,14 @@ model = Transformer()
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-for epoch in range(100):
-	optimizer.zero_grad()
-	enc_inputs, dec_inputs, target_batch = make_batch(sentences)
-	outputs, enc_self_attns, dec_self_attns, dec_enc_attns = model(enc_inputs, dec_inputs)
-	loss = criterion(outputs, target_batch.contiguous().view(-1))
-	if (epoch + 1) % 20 == 0:
-		print('Epoch:', '%04d' % (epoch + 1), 'cost =', '{:.6f}'.format(loss))
-	loss.backward()
-	optimizer.step()
+for epoch in range(20):
+    optimizer.zero_grad()
+    enc_inputs, dec_inputs, target_batch = make_batch(sentences)
+    outputs, enc_self_attns, dec_self_attns, dec_enc_attns = model(enc_inputs, dec_inputs)
+    loss = criterion(outputs, target_batch.contiguous().view(-1))
+    print('Epoch:', '%04d' % (epoch + 1), 'cost =', '{:.6f}'.format(loss))
+    loss.backward()
+    optimizer.step()
 
 # Test
 greedy_dec_input = greedy_decoder(model, enc_inputs, start_symbol=tgt_vocab["S"])
