@@ -52,7 +52,7 @@ def get_sinusoid_encoding_table(n_position, d_model):
     return torch.FloatTensor(sinusoid_table)
 
 def get_attn_pad_mask(seq_q, seq_k):
-    print(seq_q)
+    # print(seq_q)
     batch_size, len_q = seq_q.size()
     batch_size, len_k = seq_k.size()
     # eq(zero) is PAD token
