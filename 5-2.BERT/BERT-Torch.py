@@ -197,10 +197,11 @@ class BERT(nn.Module):
         h_pooled = self.activ1(self.fc(output[:, 0])) # [batch_size, d_model]
         logits_clsf = self.classifier(h_pooled) # [batch_size, 2]
 
-        masked_pos = masked_pos[:, :, None].expand(-1, -1, output.size(-1)) # [batch_size, maxlen, d_model]
-        h_masked = torch.gather(output, 1, masked_pos) # masking position [batch_size, len, d_model]
+        masked_pos = masked_pos[:, :, None].expand(-1, -1, output.size(-1)) # [batch_size, max_pred, d_model]
+        # get masked position from final output of transformer.
+        h_masked = torch.gather(output, 1, masked_pos) # masking position [batch_size, max_pred, d_model]
         h_masked = self.norm(self.activ2(self.linear(h_masked)))
-        logits_lm = self.decoder(h_masked) + self.decoder_bias # [batch_size, maxlen, n_vocab]
+        logits_lm = self.decoder(h_masked) + self.decoder_bias # [batch_size, max_pred, n_vocab]
 
         return logits_lm, logits_clsf
 
