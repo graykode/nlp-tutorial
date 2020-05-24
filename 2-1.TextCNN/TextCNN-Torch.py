@@ -48,7 +48,7 @@ class TextCNN(nn.Module):
         self.Bias = nn.Parameter(0.1 * torch.ones([num_classes])).type(dtype)
 
     def forward(self, X):
-        embedded_chars = self.W[X] # [batch_size, sequence_length, sequence_length]
+        embedded_chars = self.W[X] # [batch_size, sequence_length, embedding_size]
         embedded_chars = embedded_chars.unsqueeze(1) # add channel(=1) [batch, channel(=1), sequence_length, embedding_size]
 
         pooled_outputs = []
