@@ -3,7 +3,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.autograd import Variable
 
 dtype = torch.FloatTensor
 
@@ -47,7 +46,7 @@ class NNLM(nn.Module):
 
     def forward(self, X):
         X = self.C(X)
-        X = X.view(-1, n_step * m) # [batch_size, n_step * n_class]
+        X = X.view(-1, n_step * m) # [batch_size, n_step * m]
         tanh = torch.tanh(self.d + torch.mm(X, self.H)) # [batch_size, n_hidden]
         output = self.b + torch.mm(X, self.W) + torch.mm(tanh, self.U) # [batch_size, n_class]
         return output
