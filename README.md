@@ -4,7 +4,11 @@
 
 `nlp-tutorial` is a tutorial for who is studying NLP(Natural Language Processing) using **TensorFlow** and **Pytorch**. Most of the models in NLP were implemented with less than **100 lines** of code.(except comments or blank lines)
 
+## Dependencies
 
+- Python 3.6+
+- Tensorflow 1.12.0+
+- Pytorch 1.1.0+
 
 ## Curriculum - (Example Purpose)
 
@@ -85,18 +89,8 @@
 
 
 
-
-## Dependencies
-
-- Python 3.5+
-- Tensorflow 1.12.0+
-- Pytorch 0.4.1+
-- Plan to add Keras Version
-
-
-
 ## Author
 
-- Tae Hwan Jung(Jeff Jung) @graykode
+- Tae Hwan Jung(Jeff Jung) @graykode，modify by [wmathor](https://github.com/wmathor)
 - Author Email : nlkey2022@gmail.com
 - Acknowledgements to [mojitok](http://mojitok.com/) as NLP Research Internship.
