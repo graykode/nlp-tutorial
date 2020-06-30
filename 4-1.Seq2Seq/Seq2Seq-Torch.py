@@ -13,14 +13,13 @@ import numpy as np
 import torch.nn as nn
 import torch.utils.data as Data
 
-dtype = torch.FloatTensor
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # S: Symbol that shows starting of decoding input
 # E: Symbol that shows starting of decoding output
-# ?: Symbol that will fill in blank sequence if current batch data size is short than time steps ⭐
+# ?: Symbol that will fill in blank sequence if current batch data size is short than n_step
 
-char_arr = [c for c in 'SE?abcdefghijklmnopqrstuvwxyz']
-letter2idx = {n: i for i, n in enumerate(char_arr)}
+letter = [c for c in 'SE?abcdefghijklmnopqrstuvwxyz']
+letter2idx = {n: i for i, n in enumerate(letter)}
 
 seq_data = [['man', 'women'], ['black', 'white'], ['king', 'queen'], ['girl', 'boy'], ['up', 'down'], ['high', 'low']]
 
@@ -49,23 +48,23 @@ def make_data(seq_data):
     return torch.Tensor(enc_input_all), torch.Tensor(dec_input_all), torch.LongTensor(dec_output_all)
 
 '''
-enc_input_all: [batch_size, n_step+1 (because of 'E'), n_class]
-dec_input_all: [batch_size, n_step+1 (because of 'S'), n_class]
-dec_output_all: [batch_size, n_step+1 (because of 'E')]
+enc_input_all: [6, n_step+1 (because of 'E'), n_class]
+dec_input_all: [6, n_step+1 (because of 'S'), n_class]
+dec_output_all: [6, n_step+1 (because of 'E')]
 '''
 enc_input_all, dec_input_all, dec_output_all = make_data(seq_data)
 
 class TranslateDataSet(Data.Dataset):
-    def __init__(self, enc_input_all, dec_input_all, dec_output_batch):
+    def __init__(self, enc_input_all, dec_input_all, dec_output_all):
         self.enc_input_all = enc_input_all
         self.dec_input_all = dec_input_all
-        self.dec_output_batch = dec_output_batch
+        self.dec_output_all = dec_output_all
     
     def __len__(self): # return dataset size
         return len(self.enc_input_all)
     
     def __getitem__(self, idx):
-        return self.enc_input_all[idx], self.dec_input_all[idx], self.dec_output_batch[idx]
+        return self.enc_input_all[idx], self.dec_input_all[idx], self.dec_output_all[idx]
 
 loader = Data.DataLoader(TranslateDataSet(enc_input_all, dec_input_all, dec_output_all), batch_size, True)
 
@@ -98,17 +97,17 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 for epoch in range(5000):
   for enc_input_batch, dec_input_batch, dec_output_batch in loader:
       # make hidden shape [num_layers * num_directions, batch_size, n_hidden]
-      hidden = torch.zeros(1, batch_size, n_hidden).to(device)
+      h_0 = torch.zeros(1, batch_size, n_hidden).to(device)
 
       (enc_input_batch, dec_intput_batch, dec_output_batch) = (enc_input_batch.to(device), dec_input_batch.to(device), dec_output_batch.to(device))
       # enc_input_batch : [batch_size, n_step+1, n_class]
       # dec_intput_batch : [batch_size, n_step+1, n_class]
       # dec_output_batch : [batch_size, n_step+1], not one-hot
-      pred = model(enc_input_batch, hidden, dec_intput_batch)
+      pred = model(enc_input_batch, h_0, dec_intput_batch)
       # pred : [n_step+1, batch_size, n_class]
       pred = pred.transpose(0, 1) # [batch_size, n_step+1(=6), n_class]
       loss = 0
-      for i in range(0, len(dec_output_batch)):
+      for i in range(len(dec_output_batch)):
           # pred[i] : [n_step+1, n_class]
           # dec_output_batch[i] : [n_step+1]
           loss += criterion(pred[i], dec_output_batch[i])
@@ -121,7 +120,7 @@ for epoch in range(5000):
 
 # Test
 def translate(word):
-    enc_input, dec_input, _ = make_data([[word, '?' * len(word)]])
+    enc_input, dec_input, _ = make_data([[word, '?' * n_step]])
     enc_input, dec_input = enc_input.to(device), dec_input.to(device)
     # make hidden shape [num_layers * num_directions, batch_size, n_hidden]
     hidden = torch.zeros(1, 1, n_hidden).to(device)
@@ -129,7 +128,7 @@ def translate(word):
     # output : [n_step+1, batch_size, n_class]
 
     predict = output.data.max(2, keepdim=True)[1] # select n_class dimension
-    decoded = [char_arr[i] for i in predict]
+    decoded = [letter[i] for i in predict]
     translated = ''.join(decoded[:decoded.index('E')])
 
     return translated.replace('?', '')
