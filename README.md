@@ -56,7 +56,7 @@
   - Colab -  [Seq2Seq_Torch.ipynb](https://colab.research.google.com/drive/18-pjFO8qYHOIqbb3aSReNpAbqZHCzLXq?usp=sharing)
 - 4-2. [Seq2Seq with Attention](https://github.com/graykode/nlp-tutorial/tree/master/4-2.Seq2Seq(Attention)) - **Translate**
   - Paper - [Neural Machine Translation by Jointly Learning to Align and Translate(2014)](https://arxiv.org/abs/1409.0473)
-  - Colab -  [Seq2Seq(Attention)_Torch.ipynb](https://drive.google.com/file/d/1cqxr8HbdPSFYbBYVULnCt7bJ854CwBrZ/view?usp=sharing)
+  - Colab -  [Seq2Seq(Attention)_Torch.ipynb](https://drive.google.com/file/d/1xKYlvwhVrw1FNDbpyapCewn9fzatKrW_/view?usp=sharing)
 - 4-3. [Bi-LSTM with Attention](https://github.com/graykode/nlp-tutorial/tree/master/4-3.Bi-LSTM(Attention)) - **Binary Sentiment Classification**
   - Colab -  [Bi_LSTM(Attention)_Torch.ipynb](https://colab.research.google.com/drive/1RDXyIYPm6PWBWP4tVD85rkIo50clgyiQ?usp=sharing)
 
