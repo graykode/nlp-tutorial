@@ -18,17 +18,17 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data as Data
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # S: Symbol that shows starting of decoding input
 # E: Symbol that shows starting of decoding output
 # P: Symbol that will fill in blank sequence if current batch data size is short than time steps
 sentences = [
+        # enc_input           dec_input         dec_output
         ['ich mochte ein bier P', 'S i want a beer .', 'i want a beer . E'],
         ['ich mochte ein cola P', 'S i want a coke .', 'i want a coke . E']
 ]
 
-# Transformer Parameters
 # Padding Should be Zero
 src_vocab = {'P' : 0, 'ich' : 1, 'mochte' : 2, 'ein' : 3, 'bier' : 4, 'cola' : 5}
 src_vocab_size = len(src_vocab)
@@ -37,9 +37,10 @@ tgt_vocab = {'P' : 0, 'i' : 1, 'want' : 2, 'a' : 3, 'beer' : 4, 'coke' : 5, 'S' 
 idx2word = {i: w for i, w in enumerate(tgt_vocab)}
 tgt_vocab_size = len(tgt_vocab)
 
-src_len = 5
-tgt_len = 6
+src_len = 5 # enc_input max sequence length
+tgt_len = 6 # dec_input(=dec_output) max sequence length
 
+# Transformer Parameters
 d_model = 512  # Embedding Size
 d_ff = 2048 # FeedForward dimension
 d_k = d_v = 64  # dimension of K(=Q), V
@@ -50,8 +51,8 @@ def make_data(sentences):
     enc_inputs, dec_inputs, dec_outputs = [], [], []
     for i in range(len(sentences)):
       enc_input = [[src_vocab[n] for n in sentences[i][0].split()]] # [[1, 2, 3, 4, 0], [1, 2, 3, 5, 0]]
-      dec_input = [[tgt_vocab[n] for n in sentences[i][1].split()]] # [[6, 1, 2, 3, 4], [6, 1, 2, 3, 5]]
-      dec_output = [[tgt_vocab[n] for n in sentences[i][2].split()]] # [[1, 2, 3, 4, 7], [1, 2, 3, 5, 7]]
+      dec_input = [[tgt_vocab[n] for n in sentences[i][1].split()]] # [[6, 1, 2, 3, 4, 8], [6, 1, 2, 3, 5, 8]]
+      dec_output = [[tgt_vocab[n] for n in sentences[i][2].split()]] # [[1, 2, 3, 4, 8, 7], [1, 2, 3, 5, 8, 7]]
 
       enc_inputs.extend(enc_input)
       dec_inputs.extend(dec_input)
@@ -76,31 +77,6 @@ class MyDataSet(Data.Dataset):
 
 loader = Data.DataLoader(MyDataSet(enc_inputs, dec_inputs, dec_outputs), 2, True)
 
-"""----
-以下内容均为测试
-"""
-
-a = torch.LongTensor([[1, 2, 3, 4, 0], [1, 2, 3, 5, 0]]) # [2, 5]
-a = a.data.eq(0).unsqueeze(1).expand(2, 5, 5)
-print(a)
-print()
-a = a.unsqueeze(1).repeat(1, 8, 1, 1)
-print(a)
-
-b = torch.randn(a.shape) # [2, 8, 5, 5]
-b.masked_fill_(a, -1e9)
-print(b.shape)
-print(nn.Softmax(dim=-1)(b))
-
-a = torch.from_numpy(np.array([1, 0, 0]))
-a = a.eq(0)
-b = torch.from_numpy(np.array([1, 0, 2]))
-print(a)
-print(b)
-print(a + b)
-
-"""测试结束"""
-
 def get_sinusoid_encoding_table(n_position, d_model):
     def cal_angle(position, hid_idx):
         return position / np.power(10000, 2 * (hid_idx // 2) / d_model)
@@ -116,6 +92,8 @@ def get_attn_pad_mask(seq_q, seq_k):
     '''
     seq_q: [batch_size, seq_len]
     seq_k: [batch_size, seq_len]
+    seq_len could be src_len or it could be tgt_len
+    seq_len in seq_q and seq_len in seq_k maybe not equal
     '''
     batch_size, len_q = seq_q.size()
     batch_size, len_k = seq_k.size()
@@ -123,14 +101,14 @@ def get_attn_pad_mask(seq_q, seq_k):
     pad_attn_mask = seq_k.data.eq(0).unsqueeze(1)  # [batch_size, 1, len_k], False is masked
     return pad_attn_mask.expand(batch_size, len_q, len_k)  # [batch_size, len_q, len_k]
 
-def get_attn_subsequent_mask(seq):
+def get_attn_subsequence_mask(seq):
     '''
-    seq: [batch_size, tgt_len, tgt_len]
+    seq: [batch_size, tgt_len]
     '''
     attn_shape = [seq.size(0), seq.size(1), seq.size(1)]
-    subsequent_mask = np.triu(np.ones(attn_shape), k=1) # Upper triangular matrix
-    subsequent_mask = torch.from_numpy(subsequent_mask).byte()
-    return subsequent_mask
+    subsequence_mask = np.triu(np.ones(attn_shape), k=1) # Upper triangular matrix
+    subsequence_mask = torch.from_numpy(subsequence_mask).byte()
+    return subsequence_mask # [batch_size, tgt_len, tgt_len]
 
 class ScaledDotProductAttention(nn.Module):
     def __init__(self):
@@ -140,7 +118,7 @@ class ScaledDotProductAttention(nn.Module):
         '''
         Q: [batch_size, n_heads, len_q, d_k]
         K: [batch_size, n_heads, len_k, d_k]
-        V: [batch_size, n_heads, len_k, d_v]
+        V: [batch_size, n_heads, len_v(=len_k), d_v]
         attn_mask: [batch_size, n_heads, seq_len, seq_len]
         '''
         scores = torch.matmul(Q, K.transpose(-1, -2)) / np.sqrt(d_k) # scores : [batch_size, n_heads, len_q, len_k]
@@ -161,14 +139,14 @@ class MultiHeadAttention(nn.Module):
         '''
         input_Q: [batch_size, len_q, d_model]
         input_K: [batch_size, len_k, d_model]
-        input_V: [batch_size, len_k, d_model]
+        input_V: [batch_size, len_v(=len_k), d_model]
         attn_mask: [batch_size, seq_len, seq_len]
         '''
         residual, batch_size = input_Q, input_Q.size(0)
-        # (B, S, D) -proj-> (B, S, D_) -split-> (B, S, H, W) -trans-> (B, H, S, W)
+        # (B, S, D) -proj-> (B, S, D_new) -split-> (B, S, H, W) -trans-> (B, H, S, W)
         Q = self.W_Q(input_Q).view(batch_size, -1, n_heads, d_k).transpose(1,2)  # Q: [batch_size, n_heads, len_q, d_k]
         K = self.W_K(input_K).view(batch_size, -1, n_heads, d_k).transpose(1,2)  # K: [batch_size, n_heads, len_k, d_k]
-        V = self.W_V(input_V).view(batch_size, -1, n_heads, d_v).transpose(1,2)  # V: [batch_size, n_heads, len_k, d_v]
+        V = self.W_V(input_V).view(batch_size, -1, n_heads, d_v).transpose(1,2)  # V: [batch_size, n_heads, len_v(=len_k), d_v]
 
         attn_mask = attn_mask.unsqueeze(1).repeat(1, n_heads, 1, 1) # attn_mask : [batch_size, n_heads, seq_len, seq_len]
 
@@ -270,8 +248,8 @@ class Decoder(nn.Module):
         pos_emb = self.pos_emb(dec_inputs) # [batch_size, tgt_len, d_model]
         dec_outputs = word_emb + pos_emb
         dec_self_attn_pad_mask = get_attn_pad_mask(dec_inputs, dec_inputs) # [batch_size, tgt_len, tgt_len]
-        dec_self_attn_subsequent_mask = get_attn_subsequent_mask(dec_inputs) # [batch_size, tgt_len, tgt_len]
-        dec_self_attn_mask = torch.gt((dec_self_attn_pad_mask + dec_self_attn_subsequent_mask), 0) # [batch_size, tgt_len, tgt_len]
+        dec_self_attn_subsequence_mask = get_attn_subsequence_mask(dec_inputs) # [batch_size, tgt_len, tgt_len]
+        dec_self_attn_mask = torch.gt((dec_self_attn_pad_mask + dec_self_attn_subsequence_mask), 0) # [batch_size, tgt_len, tgt_len]
 
         dec_enc_attn_mask = get_attn_pad_mask(dec_inputs, enc_inputs) # [batc_size, tgt_len, src_len]
 
