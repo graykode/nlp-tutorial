@@ -36,7 +36,7 @@ def make_data(seq_data):
         for i in range(2):
             seq[i] = seq[i] + '?' * (n_step - len(seq[i])) # 'man??', 'women'
 
-        enc_input = [letter2idx[n] for n in seq[0]] # ['m', 'a', 'n', '?', '?', 'E']
+        enc_input = [letter2idx[n] for n in (seq[0] + 'E')] # ['m', 'a', 'n', '?', '?', 'E']
         dec_input = [letter2idx[n] for n in ('S' + seq[1])] # ['S', 'w', 'o', 'm', 'e', 'n']
         dec_output = [letter2idx[n] for n in (seq[1] + 'E')] # ['w', 'o', 'm', 'e', 'n', 'E']
 
