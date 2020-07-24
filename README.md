@@ -77,7 +77,7 @@
   - bilibili - https://www.bilibili.com/video/BV1mk4y1q7eK
 - 5-2. [BERT](https://github.com/graykode/nlp-tutorial/tree/master/5-2.BERT) - **Classification Next Sentence & Predict Masked Tokens**
   - Paper - [BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding(2018)](https://arxiv.org/abs/1810.04805)
-  - Colab - [BERT_Torch.ipynb](https://colab.research.google.com/github/graykode/nlp-tutorial/blob/master/5-2.BERT/BERT_Torch.ipynb)
+  - Colab - [BERT_Torch.ipynb](https://colab.research.google.com/drive/1LVhb99B-YQJ1bGnaWIX-2bgANy78zAAt?usp=sharing)
 
 |           Model            |              Example               |
 | :------------------------: | :--------------------------------: |
