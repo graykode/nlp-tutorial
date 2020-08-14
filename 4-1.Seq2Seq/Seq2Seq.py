@@ -1,26 +1,15 @@
-# code by Tae Hwan Jung(Jeff Jung) @graykode
+# %%
+# code by Tae Hwan Jung @graykode
+import argparse
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 
-dtype = torch.FloatTensor
 # S: Symbol that shows starting of decoding input
 # E: Symbol that shows starting of decoding output
 # P: Symbol that will fill in blank sequence if current batch data size is short than time steps
 
-char_arr = [c for c in 'SEPabcdefghijklmnopqrstuvwxyz']
-num_dic = {n: i for i, n in enumerate(char_arr)}
-
-seq_data = [['man', 'women'], ['black', 'white'], ['king', 'queen'], ['girl', 'boy'], ['up', 'down'], ['high', 'low']]
-
-# Seq2Seq Parameter
-n_step = 5
-n_hidden = 128
-n_class = len(num_dic)
-batch_size = len(seq_data)
-
-def make_batch(seq_data):
+def make_batch():
     input_batch, output_batch, target_batch = [], [], []
 
     for seq in seq_data:
@@ -36,7 +25,7 @@ def make_batch(seq_data):
         target_batch.append(target) # not one-hot
 
     # make tensor
-    return Variable(torch.Tensor(input_batch)), Variable(torch.Tensor(output_batch)), Variable(torch.LongTensor(target_batch))
+    return torch.FloatTensor(input_batch), torch.FloatTensor(output_batch), torch.LongTensor(target_batch)
 
 # Model
 class Seq2Seq(nn.Module):
@@ -59,53 +48,63 @@ class Seq2Seq(nn.Module):
         model = self.fc(outputs) # model : [max_len+1(=6), batch_size, n_class]
         return model
 
+if __name__ == '__main__':
+    n_step = 5
+    n_hidden = 128
 
-input_batch, output_batch, target_batch = make_batch(seq_data)
+    char_arr = [c for c in 'SEPabcdefghijklmnopqrstuvwxyz']
+    num_dic = {n: i for i, n in enumerate(char_arr)}
+    seq_data = [['man', 'women'], ['black', 'white'], ['king', 'queen'], ['girl', 'boy'], ['up', 'down'], ['high', 'low']]
 
-model = Seq2Seq()
-criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    n_class = len(num_dic)
+    batch_size = len(seq_data)
 
-for epoch in range(5000):
-    # make hidden shape [num_layers * num_directions, batch_size, n_hidden]
-    hidden = Variable(torch.zeros(1, batch_size, n_hidden))
+    model = Seq2Seq()
 
-    optimizer.zero_grad()
-    # input_batch : [batch_size, max_len(=n_step, time step), n_class]
-    # output_batch : [batch_size, max_len+1(=n_step, time step) (becase of 'S' or 'E'), n_class]
-    # target_batch : [batch_size, max_len+1(=n_step, time step)], not one-hot
-    output = model(input_batch, hidden, output_batch)
-    # output : [max_len+1, batch_size, n_class]
-    output = output.transpose(0, 1) # [batch_size, max_len+1(=6), n_class]
-    loss = 0
-    for i in range(0, len(target_batch)):
-        # output[i] : [max_len+1, n_class, target_batch[i] : max_len+1]
-        loss += criterion(output[i], target_batch[i])
-    if (epoch + 1) % 1000 == 0:
-        print('Epoch:', '%04d' % (epoch + 1), 'cost =', '{:.6f}'.format(loss))
-    loss.backward()
-    optimizer.step()
+    criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
+    input_batch, output_batch, target_batch = make_batch()
 
-# Test
-def translate(word):
-    input_batch, output_batch, _ = make_batch([[word, 'P' * len(word)]])
+    for epoch in range(5000):
+        # make hidden shape [num_layers * num_directions, batch_size, n_hidden]
+        hidden = torch.zeros(1, batch_size, n_hidden)
 
-    # make hidden shape [num_layers * num_directions, batch_size, n_hidden]
-    hidden = Variable(torch.zeros(1, 1, n_hidden))
-    output = model(input_batch, hidden, output_batch)
-    # output : [max_len+1(=6), batch_size(=1), n_class]
+        optimizer.zero_grad()
+        # input_batch : [batch_size, max_len(=n_step, time step), n_class]
+        # output_batch : [batch_size, max_len+1(=n_step, time step) (becase of 'S' or 'E'), n_class]
+        # target_batch : [batch_size, max_len+1(=n_step, time step)], not one-hot
+        output = model(input_batch, hidden, output_batch)
+        # output : [max_len+1, batch_size, n_class]
+        output = output.transpose(0, 1) # [batch_size, max_len+1(=6), n_class]
+        loss = 0
+        for i in range(0, len(target_batch)):
+            # output[i] : [max_len+1, n_class, target_batch[i] : max_len+1]
+            loss += criterion(output[i], target_batch[i])
+        if (epoch + 1) % 1000 == 0:
+            print('Epoch:', '%04d' % (epoch + 1), 'cost =', '{:.6f}'.format(loss))
+        loss.backward()
+        optimizer.step()
 
-    predict = output.data.max(2, keepdim=True)[1] # select n_class dimension
-    decoded = [char_arr[i] for i in predict]
-    end = decoded.index('E')
-    translated = ''.join(decoded[:end])
+    # Test
+    def translate(word, args):
+        input_batch, output_batch, _ = make_batch([[word, 'P' * len(word)]], args)
 
-    return translated.replace('P', '')
+        # make hidden shape [num_layers * num_directions, batch_size, n_hidden]
+        hidden = torch.zeros(1, 1, args.n_hidden)
+        output = model(input_batch, hidden, output_batch)
+        # output : [max_len+1(=6), batch_size(=1), n_class]
 
-print('test')
-print('man ->', translate('man'))
-print('mans ->', translate('mans'))
-print('king ->', translate('king'))
-print('black ->', translate('black'))
-print('upp ->', translate('upp'))
+        predict = output.data.max(2, keepdim=True)[1] # select n_class dimension
+        decoded = [char_arr[i] for i in predict]
+        end = decoded.index('E')
+        translated = ''.join(decoded[:end])
+
+        return translated.replace('P', '')
+
+    print('test')
+    print('man ->', translate('man'))
+    print('mans ->', translate('mans'))
+    print('king ->', translate('king'))
+    print('black ->', translate('black'))
+    print('upp ->', translate('upp'))

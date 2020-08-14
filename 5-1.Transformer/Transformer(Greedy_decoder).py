@@ -1,44 +1,22 @@
-'''
-  code by Tae Hwan Jung(Jeff Jung) @graykode, Derek Miller @dmmiller612
-  Reference : https://github.com/jadore801120/attention-is-all-you-need-pytorch
-              https://github.com/JayParks/transformer
-'''
+# %%
+# code by Tae Hwan Jung(Jeff Jung) @graykode, Derek Miller @dmmiller612
+# Reference : https://github.com/jadore801120/attention-is-all-you-need-pytorch
+#           https://github.com/JayParks/transformer
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.autograd import Variable
 import matplotlib.pyplot as plt
 
-dtype = torch.FloatTensor
 # S: Symbol that shows starting of decoding input
 # E: Symbol that shows starting of decoding output
 # P: Symbol that will fill in blank sequence if current batch data size is short than time steps
-sentences = ['ich mochte ein bier P', 'S i want a beer', 'i want a beer E']
 
-# Transformer Parameters
-# Padding Should be Zero index
-src_vocab = {'P' : 0, 'ich' : 1, 'mochte' : 2, 'ein' : 3, 'bier' : 4}
-src_vocab_size = len(src_vocab)
-
-tgt_vocab = {'P' : 0, 'i' : 1, 'want' : 2, 'a' : 3, 'beer' : 4, 'S' : 5, 'E' : 6}
-number_dict = {i: w for i, w in enumerate(tgt_vocab)}
-tgt_vocab_size = len(tgt_vocab)
-
-src_len = 5
-tgt_len = 5
-
-d_model = 512  # Embedding Size
-d_ff = 2048 # FeedForward dimension
-d_k = d_v = 64  # dimension of K(=Q), V
-n_layers = 6  # number of Encoder of Decoder Layer
-n_heads = 8  # number of heads in Multi-Head Attention
-
-def make_batch(sentences):
+def make_batch():
     input_batch = [[src_vocab[n] for n in sentences[0].split()]]
     output_batch = [[tgt_vocab[n] for n in sentences[1].split()]]
     target_batch = [[tgt_vocab[n] for n in sentences[2].split()]]
-    return Variable(torch.LongTensor(input_batch)), Variable(torch.LongTensor(output_batch)), Variable(torch.LongTensor(target_batch))
+    return torch.LongTensor(input_batch), torch.LongTensor(output_batch), torch.LongTensor(target_batch)
 
 def get_sinusoid_encoding_table(n_position, d_model):
     def cal_angle(position, hid_idx):
@@ -220,31 +198,52 @@ def showgraph(attn):
     ax.set_yticklabels(['']+sentences[2].split(), fontdict={'fontsize': 14})
     plt.show()
 
-model = Transformer()
+if __name__ == '__main__':
+    sentences = ['ich mochte ein bier P', 'S i want a beer', 'i want a beer E']
+    # Transformer Parameters
+    # Padding Should be Zero index
+    src_vocab = {'P': 0, 'ich': 1, 'mochte': 2, 'ein': 3, 'bier': 4}
+    src_vocab_size = len(src_vocab)
 
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+    tgt_vocab = {'P': 0, 'i': 1, 'want': 2, 'a': 3, 'beer': 4, 'S': 5, 'E': 6}
+    number_dict = {i: w for i, w in enumerate(tgt_vocab)}
+    tgt_vocab_size = len(tgt_vocab)
 
-for epoch in range(20):
-    optimizer.zero_grad()
-    enc_inputs, dec_inputs, target_batch = make_batch(sentences)
-    outputs, enc_self_attns, dec_self_attns, dec_enc_attns = model(enc_inputs, dec_inputs)
-    loss = criterion(outputs, target_batch.contiguous().view(-1))
-    print('Epoch:', '%04d' % (epoch + 1), 'cost =', '{:.6f}'.format(loss))
-    loss.backward()
-    optimizer.step()
+    src_len = 5 # length of source
+    tgt_len = 5 # length of target
 
-# Test
-greedy_dec_input = greedy_decoder(model, enc_inputs, start_symbol=tgt_vocab["S"])
-predict, _, _, _ = model(enc_inputs, greedy_dec_input)
-predict = predict.data.max(1, keepdim=True)[1]
-print(sentences[0], '->', [number_dict[n.item()] for n in predict.squeeze()])
+    d_model = 512  # Embedding Size
+    d_ff = 2048  # FeedForward dimension
+    d_k = d_v = 64  # dimension of K(=Q), V
+    n_layers = 6  # number of Encoder of Decoder Layer
+    n_heads = 8  # number of heads in Multi-Head Attention
 
-print('first head of last state enc_self_attns')
-showgraph(enc_self_attns)
+    model = Transformer()
 
-print('first head of last state dec_self_attns')
-showgraph(dec_self_attns)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-print('first head of last state dec_enc_attns')
-showgraph(dec_enc_attns)
+    enc_inputs, dec_inputs, target_batch = make_batch()
+
+    for epoch in range(20):
+        optimizer.zero_grad()
+        outputs, enc_self_attns, dec_self_attns, dec_enc_attns = model(enc_inputs, dec_inputs)
+        loss = criterion(outputs, target_batch.contiguous().view(-1))
+        print('Epoch:', '%04d' % (epoch + 1), 'cost =', '{:.6f}'.format(loss))
+        loss.backward()
+        optimizer.step()
+
+    # Test
+    greedy_dec_input = greedy_decoder(model, enc_inputs, start_symbol=tgt_vocab["S"])
+    predict, _, _, _ = model(enc_inputs, greedy_dec_input)
+    predict = predict.data.max(1, keepdim=True)[1]
+    print(sentences[0], '->', [number_dict[n.item()] for n in predict.squeeze()])
+
+    print('first head of last state enc_self_attns')
+    showgraph(enc_self_attns)
+
+    print('first head of last state dec_self_attns')
+    showgraph(dec_self_attns)
+
+    print('first head of last state dec_enc_attns')
+    showgraph(dec_enc_attns)
