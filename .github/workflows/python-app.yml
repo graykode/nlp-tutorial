@@ -1,0 +1,33 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Python application
+
+on:
+  push:
+    branches: [ master ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install py2ipynb==0.0.5
+    - name: Test with py2ipynb
+      run: |
+        py2ipynb '*/*.py'
+    - name: Commit changes
+      uses: EndBug/add-and-commit@v4
+      with:
+        author_name: graykode
+        author_email: nlkey2022@gmail.com
+        message: "Automatic convert from py to ipynb"
+        add: "*/*.ipynb"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
