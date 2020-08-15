@@ -1,8 +1,7 @@
-'''
-  code by Tae Hwan Jung(Jeff Jung) @graykode
-  Reference : https://github.com/jadore801120/attention-is-all-you-need-pytorch
-              https://github.com/JayParks/transformer, https://github.com/dhlee347/pytorchic-bert
-'''
+# %%
+# code by Tae Hwan Jung(Jeff Jung) @graykode
+# Reference : https://github.com/jadore801120/attention-is-all-you-need-pytorch
+#           https://github.com/JayParks/transformer, https://github.com/dhlee347/pytorchic-bert
 import math
 import re
 from random import *
@@ -10,39 +9,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.autograd import Variable
-
-# BERT Parameters
-maxlen = 30
-batch_size = 6
-max_pred = 5 # max tokens of prediction
-n_layers = 6
-n_heads = 12
-d_model = 768
-d_ff = 768*4 # 4*d_model, FeedForward dimension
-d_k = d_v = 64  # dimension of K(=Q), V
-n_segments = 2
-
-text = (
-    'Hello, how are you? I am Romeo.\n'
-    'Hello, Romeo My name is Juliet. Nice to meet you.\n'
-    'Nice meet you too. How are you today?\n'
-    'Great. My baseball team won the competition.\n'
-    'Oh Congratulations, Juliet\n'
-    'Thanks you Romeo'
-)
-sentences = re.sub("[.,!?\\-]", '', text.lower()).split('\n') # filter '.', ',', '?', '!'
-word_list = list(set(" ".join(sentences).split()))
-word_dict = {'[PAD]' : 0, '[CLS]' : 1, '[SEP]' : 2, '[MASK]' : 3}
-for i, w in enumerate(word_list):
-    word_dict[w] = i + 4
-number_dict = {i: w for i, w in enumerate(word_dict)}
-vocab_size = len(word_dict)
-
-token_list = list()
-for sentence in sentences:
-    arr = [word_dict[s] for s in sentence.split()]
-    token_list.append(arr)
 
 # sample IsNext and NotNext to be same in small batch size
 def make_batch():
@@ -205,39 +171,68 @@ class BERT(nn.Module):
 
         return logits_lm, logits_clsf
 
-model = BERT()
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+if __name__ == '__main__':
+    # BERT Parameters
+    maxlen = 30 # maximum of length
+    batch_size = 6
+    max_pred = 5  # max tokens of prediction
+    n_layers = 6 # number of Encoder of Encoder Layer
+    n_heads = 12 # number of heads in Multi-Head Attention
+    d_model = 768 # Embedding Size
+    d_ff = 768 * 4  # 4*d_model, FeedForward dimension
+    d_k = d_v = 64  # dimension of K(=Q), V
+    n_segments = 2
 
-batch = make_batch()
-input_ids, segment_ids, masked_tokens, masked_pos, isNext = zip(*batch)
-input_ids, segment_ids, masked_tokens, masked_pos, isNext = \
-    torch.LongTensor(input_ids),  torch.LongTensor(segment_ids), torch.LongTensor(masked_tokens), \
-    torch.LongTensor(masked_pos), torch.LongTensor(isNext)
+    text = (
+        'Hello, how are you? I am Romeo.\n'
+        'Hello, Romeo My name is Juliet. Nice to meet you.\n'
+        'Nice meet you too. How are you today?\n'
+        'Great. My baseball team won the competition.\n'
+        'Oh Congratulations, Juliet\n'
+        'Thanks you Romeo'
+    )
+    sentences = re.sub("[.,!?\\-]", '', text.lower()).split('\n')  # filter '.', ',', '?', '!'
+    word_list = list(set(" ".join(sentences).split()))
+    word_dict = {'[PAD]': 0, '[CLS]': 1, '[SEP]': 2, '[MASK]': 3}
+    for i, w in enumerate(word_list):
+        word_dict[w] = i + 4
+    number_dict = {i: w for i, w in enumerate(word_dict)}
+    vocab_size = len(word_dict)
 
-for epoch in range(100):
-    optimizer.zero_grad()
+    token_list = list()
+    for sentence in sentences:
+        arr = [word_dict[s] for s in sentence.split()]
+        token_list.append(arr)
+
+    model = BERT()
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+    batch = make_batch()
+    input_ids, segment_ids, masked_tokens, masked_pos, isNext = map(torch.LongTensor, zip(*batch))
+
+    for epoch in range(100):
+        optimizer.zero_grad()
+        logits_lm, logits_clsf = model(input_ids, segment_ids, masked_pos)
+        loss_lm = criterion(logits_lm.transpose(1, 2), masked_tokens) # for masked LM
+        loss_lm = (loss_lm.float()).mean()
+        loss_clsf = criterion(logits_clsf, isNext) # for sentence classification
+        loss = loss_lm + loss_clsf
+        if (epoch + 1) % 10 == 0:
+            print('Epoch:', '%04d' % (epoch + 1), 'cost =', '{:.6f}'.format(loss))
+        loss.backward()
+        optimizer.step()
+
+    # Predict mask tokens ans isNext
+    input_ids, segment_ids, masked_tokens, masked_pos, isNext = map(torch.LongTensor, zip(batch[0]))
+    print(text)
+    print([number_dict[w.item()] for w in input_ids[0] if number_dict[w.item()] != '[PAD]'])
+
     logits_lm, logits_clsf = model(input_ids, segment_ids, masked_pos)
-    loss_lm = criterion(logits_lm.transpose(1, 2), masked_tokens) # for masked LM
-    loss_lm = (loss_lm.float()).mean()
-    loss_clsf = criterion(logits_clsf, isNext) # for sentence classification
-    loss = loss_lm + loss_clsf
-    if (epoch + 1) % 10 == 0:
-        print('Epoch:', '%04d' % (epoch + 1), 'cost =', '{:.6f}'.format(loss))
-    loss.backward()
-    optimizer.step()
+    logits_lm = logits_lm.data.max(2)[1][0].data.numpy()
+    print('masked tokens list : ',[pos.item() for pos in masked_tokens[0] if pos.item() != 0])
+    print('predict masked tokens list : ',[pos for pos in logits_lm if pos != 0])
 
-# Predict mask tokens ans isNext
-input_ids, segment_ids, masked_tokens, masked_pos, isNext = batch[0]
-print(text)
-print([number_dict[w] for w in input_ids if number_dict[w] != '[PAD]'])
-
-logits_lm, logits_clsf = model(torch.LongTensor([input_ids]), \
-                               torch.LongTensor([segment_ids]), torch.LongTensor([masked_pos]))
-logits_lm = logits_lm.data.max(2)[1][0].data.numpy()
-print('masked tokens list : ',[pos for pos in masked_tokens if pos != 0])
-print('predict masked tokens list : ',[pos for pos in logits_lm if pos != 0])
-
-logits_clsf = logits_clsf.data.max(1)[1].data.numpy()[0]
-print('isNext : ', True if isNext else False)
-print('predict isNext : ',True if logits_clsf else False)
+    logits_clsf = logits_clsf.data.max(1)[1].data.numpy()[0]
+    print('isNext : ', True if isNext else False)
+    print('predict isNext : ',True if logits_clsf else False)
