@@ -1,6 +1,5 @@
 # %%
 # code by Tae Hwan Jung @graykode
-import argparse
 import numpy as np
 import torch
 import torch.nn as nn
@@ -26,6 +25,19 @@ def make_batch():
 
     # make tensor
     return torch.FloatTensor(input_batch), torch.FloatTensor(output_batch), torch.LongTensor(target_batch)
+
+# make test batch
+def make_testbatch(input_word):
+    input_batch, output_batch = [], []
+
+    input_w = input_word + 'P' * (n_step - len(input_word))
+    input = [num_dic[n] for n in input_w]
+    output = [num_dic[n] for n in 'S' + 'P' * n_step]
+
+    input_batch = np.eye(n_class)[input]
+    output_batch = np.eye(n_class)[output]
+
+    return torch.FloatTensor(input_batch).unsqueeze(0), torch.FloatTensor(output_batch).unsqueeze(0)
 
 # Model
 class Seq2Seq(nn.Module):
@@ -87,11 +99,11 @@ if __name__ == '__main__':
         optimizer.step()
 
     # Test
-    def translate(word, args):
-        input_batch, output_batch, _ = make_batch([[word, 'P' * len(word)]], args)
+    def translate(word):
+        input_batch, output_batch = make_testbatch(word)
 
         # make hidden shape [num_layers * num_directions, batch_size, n_hidden]
-        hidden = torch.zeros(1, 1, args.n_hidden)
+        hidden = torch.zeros(1, 1, n_hidden)
         output = model(input_batch, hidden, output_batch)
         # output : [max_len+1(=6), batch_size(=1), n_class]
 
